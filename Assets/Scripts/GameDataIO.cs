@@ -25,7 +25,6 @@ namespace Survivor
                     bw.Write(gameData.EnemyPosition[i].x);
                     bw.Write(gameData.EnemyPosition[i].y);
                 }
-
                 for (int i = 0; i < balance.NumEnemies; i++)
                 {
                     bw.Write(gameData.EnemyDirection[i].x);
@@ -35,8 +34,24 @@ namespace Survivor
                 bw.Write(gameData.PlayerDirection.x);
                 bw.Write(gameData.PlayerDirection.y);
 
-                bw.Write(gameData.BoardBounds.x);
-                bw.Write(gameData.BoardBounds.y);
+                bw.Write(balance.NumAmmo);
+                for (int i = 0; i < balance.NumAmmo; i++)
+                {
+                    bw.Write(gameData.AmmoPosition[i].x);
+                    bw.Write(gameData.AmmoPosition[i].y);
+                }
+                for (int i = 0; i < balance.NumAmmo; i++)
+                {
+                    bw.Write(gameData.AmmoDirection[i].x);
+                    bw.Write(gameData.AmmoDirection[i].y);
+                }
+                bw.Write(gameData.AliveAmmoCount);
+                bw.Write(gameData.DeadAmmoCount);
+                for (int i = 0; i < balance.NumAmmo; i++)
+                    bw.Write(gameData.AliveAmmoIdx[i]);
+                for (int i = 0; i < balance.NumAmmo; i++)
+                    bw.Write(gameData.DeadAmmoIdx[i]);
+                bw.Write(gameData.FiringRateTimer);
 
                 bw.Write(gameData.GameTime);
             }
@@ -60,7 +75,6 @@ namespace Survivor
                         gameData.EnemyPosition[i].x = br.ReadSingle();
                         gameData.EnemyPosition[i].y = br.ReadSingle();
                     }
-
                     for (int i = 0; i < numEnemies; i++)
                     {
                         gameData.EnemyDirection[i].x = br.ReadSingle();
@@ -70,8 +84,24 @@ namespace Survivor
                     gameData.PlayerDirection.x = br.ReadSingle();
                     gameData.PlayerDirection.y = br.ReadSingle();
 
-                    gameData.BoardBounds.x = br.ReadSingle();
-                    gameData.BoardBounds.y = br.ReadSingle();
+                    int numAmmo = br.ReadInt32();
+                    for (int i = 0; i < numAmmo; i++)
+                    {
+                        gameData.AmmoPosition[i].x = br.ReadSingle();
+                        gameData.AmmoPosition[i].y = br.ReadSingle();
+                    }
+                    for (int i = 0; i < numAmmo; i++)
+                    {
+                        gameData.AmmoDirection[i].x = br.ReadSingle();
+                        gameData.AmmoDirection[i].y = br.ReadSingle();
+                    }
+                    gameData.AliveAmmoCount = br.ReadInt32();
+                    gameData.DeadAmmoCount = br.ReadInt32();
+                    for (int i = 0; i < numAmmo; i++)
+                        gameData.AliveAmmoIdx[i] = br.ReadInt32();
+                    for (int i = 0; i < numAmmo; i++)
+                        gameData.DeadAmmoIdx[i] = br.ReadInt32();
+                    gameData.FiringRateTimer = br.ReadInt32();
 
                     gameData.GameTime = br.ReadSingle();
                 }

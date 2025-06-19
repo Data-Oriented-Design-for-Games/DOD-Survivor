@@ -18,3 +18,5 @@ MonoBehaviour:
   SpawnRadius: 7
   PlayerVelocity: 3
   MinCollisionDistance: 0.1
+  NumAmmo: 1000
+  FiringRate: 1

@@ -9,12 +9,19 @@ namespace Survivor
     [Serializable]
     public class Balance
     {
+        [Header ("Enemies")]
         public int NumEnemies;
         public float EnemyVelocity;
         public float EnemyRadius;
         public float SpawnRadius;
+
+        [Header ("Player")]
         public float PlayerVelocity;
         public float MinCollisionDistance;
+
+        [Header("Weapons")]
+        public int NumAmmo;
+        public float FiringRate;
 
         public void LoadBalance()
         {
@@ -33,8 +40,12 @@ namespace Survivor
                 EnemyVelocity = br.ReadSingle();
                 EnemyRadius = br.ReadSingle();
                 SpawnRadius = br.ReadSingle();
+
                 PlayerVelocity = br.ReadSingle();
                 MinCollisionDistance = br.ReadSingle();
+
+                NumAmmo = br.ReadInt32();
+                FiringRate = br.ReadSingle();
 
                 int magic = br.ReadInt32();
                 Debug.Log(magic);

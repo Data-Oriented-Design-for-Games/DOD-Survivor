@@ -56,8 +56,12 @@ namespace Survivor
                     bw.Write(balanceSO.EnemyVelocity);
                     bw.Write(balanceSO.EnemyRadius);
                     bw.Write(balanceSO.SpawnRadius);
+
                     bw.Write(balanceSO.PlayerVelocity);
                     bw.Write(balanceSO.MinCollisionDistance);
+
+                    bw.Write(balanceSO.NumAmmo);
+                    bw.Write(balanceSO.FiringRate);
 
                     int magic = 123456789;
                     bw.Write(magic);

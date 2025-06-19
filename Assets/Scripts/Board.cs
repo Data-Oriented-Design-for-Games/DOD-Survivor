@@ -12,10 +12,12 @@ namespace Survivor
 
     public class Board : MonoBehaviour
     {
-        AnimatedSprite m_player;
         public Transform SpriteParent;
 
+        AnimatedSprite m_player;
         AnimatedSprite[] m_enemyPool;
+        AnimatedSprite[] m_ammoPool;
+
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
 
@@ -41,6 +43,7 @@ namespace Survivor
         {
             public SpriteAnimationData PlayerSpriteAnimData;
             public SpriteAnimationData[] EnemySpriteAnimData;
+            public SpriteAnimationData[] AmmoSpriteAnimData;
         }
 
         VisualBoardData m_visualBoardData = new VisualBoardData();
@@ -53,7 +56,8 @@ namespace Survivor
             this.gameData = gameData;
             this.balance = balance;
 
-            m_player = AssetManager.Instance.GetPlayerGameObject(SpriteParent);
+            // player
+            m_player = AssetManager.Instance.GetPlayer(SpriteParent);
             m_player.transform.localPosition = Vector2.zero;
 
             m_visualBoardData.PlayerSpriteAnimData.FrameIndex = 0;
@@ -61,10 +65,11 @@ namespace Survivor
             m_visualBoardData.PlayerSpriteAnimData.FrameTime = m_player.FrameTime;
             m_visualBoardData.PlayerSpriteAnimData.NumFrames = m_player.Sprites.Length;
 
+            // enemies
             m_enemyPool = new AnimatedSprite[balance.NumEnemies];
             for (int i = 0; i < balance.NumEnemies; i++)
             {
-                m_enemyPool[i] = AssetManager.Instance.GetEnemyGameObject(SpriteParent);
+                m_enemyPool[i] = AssetManager.Instance.GetEnemy(SpriteParent);
                 m_enemyPool[i].gameObject.SetActive(false);
             }
 
@@ -77,6 +82,24 @@ namespace Survivor
                 m_visualBoardData.EnemySpriteAnimData[i].NumFrames = m_enemyPool[i].Sprites.Length;
             }
 
+            // ammo
+            m_ammoPool = new AnimatedSprite[balance.NumAmmo];
+            for (int i = 0; i < balance.NumAmmo; i++)
+            {
+                m_ammoPool[i] = AssetManager.Instance.GetAmmo(SpriteParent);
+                m_ammoPool[i].gameObject.SetActive(false);
+            }
+
+            m_visualBoardData.AmmoSpriteAnimData = new SpriteAnimationData[balance.NumAmmo];
+            for (int i = 0; i < balance.NumAmmo; i++)
+            {
+                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = 0;
+                m_visualBoardData.AmmoSpriteAnimData[i].FrameTimeLeft = m_ammoPool[i].FrameTime;
+                m_visualBoardData.AmmoSpriteAnimData[i].FrameTime = m_ammoPool[i].FrameTime;
+                m_visualBoardData.AmmoSpriteAnimData[i].NumFrames = m_ammoPool[i].Sprites.Length;
+            }
+
+            // GUI
             m_boardGUI = new BoardGUI();
             m_boardGUI.UI = AssetManager.Instance.GetInGameUI();
 
@@ -103,6 +126,13 @@ namespace Survivor
                 m_enemyPool[i].gameObject.SetActive(true);
                 m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
             }
+
+            for (int i = 0; i < balance.NumAmmo; i++)
+            {
+                m_ammoPool[i].gameObject.SetActive(false);
+                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(Random.value * m_visualBoardData.AmmoSpriteAnimData[i].NumFrames);
+            }
+
             m_player.gameObject.SetActive(true);
 
             m_boardGUI.UI.SetActive(true);
@@ -141,7 +171,7 @@ namespace Survivor
             if (m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft <= 0.0f)
             {
                 m_visualBoardData.PlayerSpriteAnimData.FrameIndex = (m_visualBoardData.PlayerSpriteAnimData.FrameIndex + 1) % m_visualBoardData.PlayerSpriteAnimData.NumFrames;
-                m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft = m_visualBoardData.PlayerSpriteAnimData.FrameTime;
+                m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft += m_visualBoardData.PlayerSpriteAnimData.FrameTime;
                 m_player.SetSpriteFrame(m_visualBoardData.PlayerSpriteAnimData.FrameIndex);
             }
             float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
@@ -161,7 +191,7 @@ namespace Survivor
                 if (m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft <= 0.0f)
                 {
                     m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = (m_visualBoardData.EnemySpriteAnimData[i].FrameIndex + 1) % m_visualBoardData.EnemySpriteAnimData[i].NumFrames;
-                    m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft = m_visualBoardData.EnemySpriteAnimData[i].FrameTime;
+                    m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft += m_visualBoardData.EnemySpriteAnimData[i].FrameTime;
                     m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = true;
                 }
             }

@@ -9,6 +9,11 @@ namespace Survivor
         {
             gameData.EnemyPosition = new Vector2[balance.NumEnemies];
             gameData.EnemyDirection = new Vector2[balance.NumEnemies];
+
+            gameData.AmmoPosition = new Vector2[balance.NumAmmo];
+            gameData.AmmoDirection = new Vector2[balance.NumAmmo];
+            gameData.AliveAmmoIdx = new int[balance.NumAmmo];
+            gameData.DeadAmmoIdx = new int[balance.NumAmmo];
         }
 
         public static void Init(MetaData metaData)
@@ -25,9 +30,12 @@ namespace Survivor
             gameData.PlayerDirection = Vector2.zero;
 
             for (int i = 0; i < balance.NumEnemies; i++)
-            {
                 gameData.EnemyPosition[i] = spawnEnemy(gameData, balance);
-            }
+
+            gameData.AliveAmmoCount = 0;
+            gameData.DeadAmmoCount = balance.NumAmmo;
+            for (int i = 0; i < balance.NumAmmo; i++)
+                gameData.DeadAmmoIdx[i] = (balance.NumAmmo - 1) - i;
         }
 
         static Vector2 spawnEnemy(GameData gameData, Balance balance)
@@ -54,6 +62,44 @@ namespace Survivor
             a.x = (float)(ca * a.x - sa * a.y);
             a.y = (float)(sa * a.x + ca * a.y);
             return a;
+        }
+
+        public static void tryFireAmmo(GameData gameData, Balance balance, float dt, Span<int> firedAmmoIdxs, out int firedAmmoCount)
+        {
+            firedAmmoCount = 0;
+
+            gameData.FiringRateTimer -= dt;
+            if (gameData.FiringRateTimer < 0.0f && gameData.DeadAmmoCount > 0)
+            {
+                // get free ammo
+                gameData.FiringRateTimer += balance.FiringRate;
+                int ammoIdx = gameData.DeadAmmoIdx[--gameData.DeadAmmoCount];
+                gameData.AliveAmmoIdx[gameData.AliveAmmoCount++] = ammoIdx;
+                firedAmmoIdxs[firedAmmoCount++] = ammoIdx;
+
+                gameData.AmmoPosition[ammoIdx] = Vector2.zero;
+
+                // get enemy to fire at
+                int enemyIdx = GetClosestEnemyToPlayerIdx(gameData, balance);
+                gameData.AmmoDirection[ammoIdx] = gameData.EnemyPosition[enemyIdx].normalized;
+            }
+        }
+
+        public static int GetClosestEnemyToPlayerIdx(GameData gameData, Balance balance)
+        {
+            int enemyIdx = 0;
+            float closestDistanceSqr = float.MaxValue;
+            for (int i = 0; i < balance.NumEnemies; i++)
+            {
+                float distanceSqr = gameData.EnemyPosition[i].sqrMagnitude;
+                if (distanceSqr < closestDistanceSqr)
+                {
+                    enemyIdx = i;
+                    closestDistanceSqr = distanceSqr;
+                }
+            }
+
+            return enemyIdx;
         }
 
         public static void Tick(MetaData metaData, GameData gameData, Balance balance, float dt, out bool gameOver)
@@ -113,6 +159,11 @@ namespace Survivor
             Vector2 playerPosition = gameData.PlayerDirection * balance.PlayerVelocity * dt;
             for (int i = 0; i < balance.NumEnemies; i++)
                 gameData.EnemyPosition[i] -= playerPosition;
+        }
+
+        static void moveAmmo(GameData gameData, Balance balance, float dt)
+        {
+            
         }
 
         public static void MouseMove(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)

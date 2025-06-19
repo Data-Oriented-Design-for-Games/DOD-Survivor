@@ -20,6 +20,13 @@ namespace Survivor
 
         int m_screenShotIdx = 0;
 
+        void Awake()
+        {
+            base.Awake();
+
+            Application.targetFrameRate = 60;
+        }
+
         // Start is called before the first frame update
         void Start()
         {
