@@ -8,8 +8,8 @@ namespace Survivor
 {
 public class AssetManager : Singleton<AssetManager>
 {
-    [SerializeField] GameObject m_playerPrefab;
-    [SerializeField] GameObject m_enemyPrefab;
+    [SerializeField] AnimatedSprite m_playerPrefab;
+    [SerializeField] AnimatedSprite m_enemyPrefab;
 
     [SerializeField] GameObject m_UIInGame;
     [SerializeField] GameObject m_UIMainMenu;
@@ -20,12 +20,12 @@ public class AssetManager : Singleton<AssetManager>
     [SerializeField] GameOverVisual m_GameOverVisual;
     [SerializeField] PauseMenuVisual m_PauseMenuVisual;
 
-    public GameObject GetPlayerGameObject(Transform enemyParent)
+    public AnimatedSprite GetPlayerGameObject(Transform enemyParent)
     {
         return Instantiate(m_playerPrefab, enemyParent);
     }
 
-    public GameObject GetEnemyGameObject(Transform enemyParent)
+    public AnimatedSprite GetEnemyGameObject(Transform enemyParent)
     {
         return Instantiate(m_enemyPrefab, enemyParent);
     }

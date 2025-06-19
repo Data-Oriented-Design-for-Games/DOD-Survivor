@@ -12,10 +12,10 @@ namespace Survivor
 
     public class Board : MonoBehaviour
     {
-        GameObject m_player;
+        AnimatedSprite m_player;
         public Transform SpriteParent;
 
-        GameObject[] m_enemyPool;
+        AnimatedSprite[] m_enemyPool;
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
 
@@ -28,6 +28,23 @@ namespace Survivor
         MetaData metaData;
         Balance balance;
 
+        public struct SpriteAnimationData
+        {
+            public int FrameIndex;
+            public int NumFrames;
+            public float FrameTimeLeft;
+            public float FrameTime;
+            public bool FrameChanged;
+        }
+
+        public class VisualBoardData
+        {
+            public SpriteAnimationData PlayerSpriteAnimData;
+            public SpriteAnimationData[] EnemySpriteAnimData;
+        }
+
+        VisualBoardData m_visualBoardData = new VisualBoardData();
+
         public void Init(MetaData metaData, GameData gameData, Balance balance, Camera mainCamera)
         {
             m_mainCamera = mainCamera;
@@ -39,11 +56,25 @@ namespace Survivor
             m_player = AssetManager.Instance.GetPlayerGameObject(SpriteParent);
             m_player.transform.localPosition = Vector2.zero;
 
-            m_enemyPool = new GameObject[balance.NumEnemies];
+            m_visualBoardData.PlayerSpriteAnimData.FrameIndex = 0;
+            m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft = m_player.FrameTime;
+            m_visualBoardData.PlayerSpriteAnimData.FrameTime = m_player.FrameTime;
+            m_visualBoardData.PlayerSpriteAnimData.NumFrames = m_player.Sprites.Length;
+
+            m_enemyPool = new AnimatedSprite[balance.NumEnemies];
             for (int i = 0; i < balance.NumEnemies; i++)
             {
                 m_enemyPool[i] = AssetManager.Instance.GetEnemyGameObject(SpriteParent);
-                m_enemyPool[i].SetActive(false);
+                m_enemyPool[i].gameObject.SetActive(false);
+            }
+
+            m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.NumEnemies];
+            for (int i = 0; i < balance.NumEnemies; i++)
+            {
+                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = 0;
+                m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft = m_enemyPool[i].FrameTime;
+                m_visualBoardData.EnemySpriteAnimData[i].FrameTime = m_enemyPool[i].FrameTime;
+                m_visualBoardData.EnemySpriteAnimData[i].NumFrames = m_enemyPool[i].Sprites.Length;
             }
 
             m_boardGUI = new BoardGUI();
@@ -53,7 +84,7 @@ namespace Survivor
             m_boardGUI.GameTimeText = guiRef.GetTextGUI("GameTime");
             guiRef.GetButton("Pause").onClick.AddListener(pauseGame);
 
-            m_player.SetActive(false);
+            m_player.gameObject.SetActive(false);
             InputCircleOut.SetActive(false);
 
             hideUI();
@@ -69,9 +100,10 @@ namespace Survivor
             for (int i = 0; i < balance.NumEnemies; i++)
             {
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
-                m_enemyPool[i].SetActive(true);
+                m_enemyPool[i].gameObject.SetActive(true);
+                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
             }
-            m_player.SetActive(true);
+            m_player.gameObject.SetActive(true);
 
             m_boardGUI.UI.SetActive(true);
         }
@@ -79,8 +111,8 @@ namespace Survivor
         public void Hide()
         {
             for (int i = 0; i < balance.NumEnemies; i++)
-                m_enemyPool[i].SetActive(false);
-            m_player.SetActive(false);
+                m_enemyPool[i].gameObject.SetActive(false);
+            m_player.gameObject.SetActive(false);
 
             hideUI();
         }
@@ -97,13 +129,53 @@ namespace Survivor
             bool isGameOver;
             Logic.Tick(metaData, gameData, balance, dt, out isGameOver);
 
-            for (int i = 0; i < balance.NumEnemies; i++)
-                m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
-
-            m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
+            updateVisuals(dt);
 
             if (isGameOver)
                 gameOver();
+        }
+
+        private void updateVisuals(float dt)
+        {
+            m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft -= dt;
+            if (m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft <= 0.0f)
+            {
+                m_visualBoardData.PlayerSpriteAnimData.FrameIndex = (m_visualBoardData.PlayerSpriteAnimData.FrameIndex + 1) % m_visualBoardData.PlayerSpriteAnimData.NumFrames;
+                m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft = m_visualBoardData.PlayerSpriteAnimData.FrameTime;
+                m_player.SetSpriteFrame(m_visualBoardData.PlayerSpriteAnimData.FrameIndex);
+            }
+            float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
+            m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
+
+
+            for (int i = 0; i < balance.NumEnemies; i++)
+            {
+                m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
+                float scaleX = m_enemyPool[i].transform.localPosition.x > 0.0f ? 1.0f : -1.0f;
+                m_enemyPool[i].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f);
+            }
+
+            for (int i = 0; i < balance.NumEnemies; i++)
+            {
+                m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft -= dt;
+                if (m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft <= 0.0f)
+                {
+                    m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = (m_visualBoardData.EnemySpriteAnimData[i].FrameIndex + 1) % m_visualBoardData.EnemySpriteAnimData[i].NumFrames;
+                    m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft = m_visualBoardData.EnemySpriteAnimData[i].FrameTime;
+                    m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = true;
+                }
+            }
+            for (int i = 0; i < balance.NumEnemies; i++)
+            {
+                if (m_visualBoardData.EnemySpriteAnimData[i].FrameChanged)
+                {
+                    m_enemyPool[i].SetSpriteFrame(m_visualBoardData.EnemySpriteAnimData[i].FrameIndex);
+                    m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = false;
+                }
+            }
+
+            for (int i = 0; i < balance.NumEnemies; i++)
+                m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
         }
 
         void handleInput()
@@ -141,12 +213,17 @@ mousePosition = Input.GetTouch(0).position;
                 InputCircleIn.transform.localPosition = (mouseLocalPos - m_mouseDownPos).normalized * dist * ((1.0f - InputCircleIn.transform.localScale.x) / 2.0f);
                 Logic.MouseMove(gameData, m_mouseDownPos, mouseLocalPos);
             }
-            
+
             if (mouseUp)
             {
                 InputCircleOut.SetActive(false);
                 Logic.MouseUp(gameData);
             }
+        }
+
+        void updateVisuals()
+        {
+
         }
 
         void gameOver()
