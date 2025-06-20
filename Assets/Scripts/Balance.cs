@@ -22,6 +22,8 @@ namespace Survivor
         [Header("Weapons")]
         public int NumAmmo;
         public float FiringRate;
+        public float AmmoVelocity;
+        public float AmmoRadius;
 
         public void LoadBalance()
         {
@@ -46,6 +48,8 @@ namespace Survivor
 
                 NumAmmo = br.ReadInt32();
                 FiringRate = br.ReadSingle();
+                AmmoVelocity = br.ReadSingle();
+                AmmoRadius = br.ReadSingle();
 
                 int magic = br.ReadInt32();
                 Debug.Log(magic);

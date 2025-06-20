@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Security.Cryptography;
 
 namespace Survivor
 {
@@ -82,6 +83,8 @@ namespace Survivor
                 // get enemy to fire at
                 int enemyIdx = GetClosestEnemyToPlayerIdx(gameData, balance);
                 gameData.AmmoDirection[ammoIdx] = gameData.EnemyPosition[enemyIdx].normalized;
+
+                Debug.Log("Ammo added " + ammoIdx + " gameData.DeadAmmoCount " + gameData.DeadAmmoCount + " gameData.AliveAmmoCount " + gameData.AliveAmmoCount);
             }
         }
 
@@ -102,16 +105,36 @@ namespace Survivor
             return enemyIdx;
         }
 
-        public static void Tick(MetaData metaData, GameData gameData, Balance balance, float dt, out bool gameOver)
+        public static void Tick(
+            MetaData metaData,
+            GameData gameData,
+            Balance balance,
+            float dt,
+            Span<int> firedAmmoIdxs,
+            out int firedAmmoCount,
+            Span<int> deadAmmoIdxs,
+            out int deadAmmoCount,
+            out bool gameOver)
         {
             gameData.GameTime += dt;
 
+            // ammo
+            tryFireAmmo(gameData, balance, dt, firedAmmoIdxs, out firedAmmoCount);
+
+            moveAmmo(gameData, balance, dt);
+
+            checkAmmoOutOfBounds(gameData, balance);
+
+            checkAmmoEnemyCollision(gameData, balance, deadAmmoIdxs, out deadAmmoCount);
+
+            // enemies
             moveEnemies(gameData, balance, dt);
 
             checkEnemyOutOfBounds(gameData, balance);
 
             doEemyToEnemyCollision(gameData, balance);
 
+            // player
             movePlayer(gameData, balance, dt);
 
             gameOver = checkGameOver(metaData, gameData, balance);
@@ -163,8 +186,68 @@ namespace Survivor
 
         static void moveAmmo(GameData gameData, Balance balance, float dt)
         {
-            
+            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            {
+                int ammoIdx = gameData.AliveAmmoIdx[i];
+                gameData.AmmoPosition[ammoIdx] = gameData.AmmoPosition[ammoIdx] + gameData.AmmoDirection[ammoIdx] * balance.AmmoVelocity * dt;
+                // Debug.Log("Ammo moved " + ammoIdx);
+            }
         }
+
+        static void checkAmmoEnemyCollision(GameData gameData, Balance balance, Span<int> deadAmmoIdxs, out int deadAmmoCount)
+        {
+            deadAmmoCount = 0;
+            float distanceSqr = balance.AmmoRadius * balance.AmmoRadius;
+            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            {
+                int ammoIdx = gameData.AliveAmmoIdx[i];
+                for (int enemyIdx = 0; enemyIdx < balance.NumEnemies; enemyIdx++)
+                {
+                    Vector2 diff = gameData.EnemyPosition[enemyIdx] - gameData.AmmoPosition[ammoIdx];
+                    if (diff.sqrMagnitude <= distanceSqr)
+                    {
+                        // bullet impacted enemy
+
+                        // remove enemy
+                        gameData.EnemyPosition[enemyIdx] = spawnEnemy(gameData, balance);
+
+                        // remove ammo
+                        deadAmmoIdxs[deadAmmoCount++] = ammoIdx;
+                        removeIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIdx);
+                        gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIdx;
+
+                        Debug.Log("Ammo removed " + ammoIdx + " gameData.DeadAmmoCount " + gameData.DeadAmmoCount + " gameData.AliveAmmoCount " + gameData.AliveAmmoCount);
+                        break;
+                    }
+                }
+            }
+        }
+
+        static void checkAmmoOutOfBounds(GameData gameData, Balance balance)
+        {
+            float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
+            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            {
+                int ammoIdx = gameData.AliveAmmoIdx[i];
+                if (gameData.AmmoPosition[ammoIdx].sqrMagnitude > distanceSqr)
+                {
+                    removeIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIdx);
+                    gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIdx;
+
+                    Debug.Log("Ammo out of bounds " + ammoIdx + " gameData.DeadAmmoCount " + gameData.DeadAmmoCount + " gameData.AliveAmmoCount " + gameData.AliveAmmoCount);
+                }
+            }
+        }
+
+        public static void removeIndexFromArray(int[] array, ref int arrayCount, int index)
+        {
+            int count = 0;
+            for (int i = 0; i < arrayCount; i++)
+                if (array[i] != index)
+                    array[count++] = array[i];
+            arrayCount = count;
+        }
+
 
         public static void MouseMove(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
         {

@@ -62,6 +62,8 @@ namespace Survivor
 
                     bw.Write(balanceSO.NumAmmo);
                     bw.Write(balanceSO.FiringRate);
+                    bw.Write(balanceSO.AmmoVelocity);
+                    bw.Write(balanceSO.AmmoRadius);
 
                     int magic = 123456789;
                     bw.Write(magic);

@@ -1,3 +1,4 @@
+using System;
 using CommonTools;
 using TMPro;
 using UnityEngine;
@@ -124,13 +125,13 @@ namespace Survivor
             {
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
                 m_enemyPool[i].gameObject.SetActive(true);
-                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
+                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
             }
 
             for (int i = 0; i < balance.NumAmmo; i++)
             {
                 m_ammoPool[i].gameObject.SetActive(false);
-                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(Random.value * m_visualBoardData.AmmoSpriteAnimData[i].NumFrames);
+                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.AmmoSpriteAnimData[i].NumFrames);
             }
 
             m_player.gameObject.SetActive(true);
@@ -157,16 +158,26 @@ namespace Survivor
             handleInput();
 
             bool isGameOver;
-            Logic.Tick(metaData, gameData, balance, dt, out isGameOver);
+            Span<int> firedAmmoIdxs = stackalloc int[balance.NumAmmo];
+            int firedAmmoCount;
+            Span<int> deadAmmoIdxs = stackalloc int[balance.NumEnemies];
+            int deadAmmoCount;
+            Logic.Tick(metaData, gameData, balance, dt, firedAmmoIdxs, out firedAmmoCount, deadAmmoIdxs, out deadAmmoCount, out isGameOver);
 
-            updateVisuals(dt);
+            updateVisuals(firedAmmoIdxs, firedAmmoCount, deadAmmoIdxs, deadAmmoCount, dt);
 
             if (isGameOver)
                 gameOver();
         }
 
-        private void updateVisuals(float dt)
+        private void updateVisuals(
+            Span<int> firedAmmoIdxs,
+            int firedAmmoCount,
+            Span<int> deadAmmoIdsx,
+            int deadAmmoCount,
+            float dt)
         {
+            // player
             m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft -= dt;
             if (m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft <= 0.0f)
             {
@@ -177,7 +188,7 @@ namespace Survivor
             float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
             m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
 
-
+            // enemies
             for (int i = 0; i < balance.NumEnemies; i++)
             {
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
@@ -204,6 +215,25 @@ namespace Survivor
                 }
             }
 
+            // ammo
+            for (int i = 0; i < firedAmmoCount; i++)
+            {
+                int ammoIdx = firedAmmoIdxs[i];
+                m_ammoPool[ammoIdx].gameObject.SetActive(true);
+            }
+            for (int i = 0; i < deadAmmoCount; i++)
+            {
+                int ammoIdx = deadAmmoIdsx[i];
+                m_ammoPool[ammoIdx].gameObject.SetActive(false);
+            }
+
+            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            {
+                int ammoIdx = gameData.AliveAmmoIdx[i];
+                m_ammoPool[ammoIdx].transform.localPosition = gameData.AmmoPosition[ammoIdx];
+            }
+
+            // ui
             for (int i = 0; i < balance.NumEnemies; i++)
                 m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
         }

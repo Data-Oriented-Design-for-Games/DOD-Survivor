@@ -19,4 +19,6 @@ MonoBehaviour:
   PlayerVelocity: 3
   MinCollisionDistance: 0.1
   NumAmmo: 1000
-  FiringRate: 1
+  FiringRate: 0.1
+  AmmoVelocity: 2
+  AmmoRadius: 0.1

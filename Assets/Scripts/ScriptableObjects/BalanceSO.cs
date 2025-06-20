@@ -18,5 +18,7 @@ namespace Survivor
         [Header("Weapons")]
         public int NumAmmo;
         public float FiringRate;
+        public float AmmoVelocity;
+        public float AmmoRadius;
     }
 }
