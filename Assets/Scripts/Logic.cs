@@ -143,7 +143,7 @@ namespace Survivor
             deadWeaponCount = 0;
 
             // Weapon
-            //tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
+            tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
             moveWeapons(gameData, balance, dt);
 
