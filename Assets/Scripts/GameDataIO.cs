@@ -19,13 +19,13 @@ namespace Survivor
 
                 bw.Write(gameData.InGame);
 
-                bw.Write(balance.NumEnemies);
-                for (int i = 0; i < balance.NumEnemies; i++)
+                bw.Write(balance.MaxEnemies);
+                for (int i = 0; i < balance.MaxEnemies; i++)
                 {
                     bw.Write(gameData.EnemyPosition[i].x);
                     bw.Write(gameData.EnemyPosition[i].y);
                 }
-                for (int i = 0; i < balance.NumEnemies; i++)
+                for (int i = 0; i < balance.MaxEnemies; i++)
                 {
                     bw.Write(gameData.EnemyDirection[i].x);
                     bw.Write(gameData.EnemyDirection[i].y);
@@ -33,25 +33,31 @@ namespace Survivor
 
                 bw.Write(gameData.PlayerDirection.x);
                 bw.Write(gameData.PlayerDirection.y);
+                bw.Write(gameData.LastPlayerDirection.x);
+                bw.Write(gameData.LastPlayerDirection.y);
 
-                bw.Write(balance.NumAmmo);
-                for (int i = 0; i < balance.NumAmmo; i++)
+                bw.Write(balance.MaxWeapons);
+                for (int i = 0; i < balance.MaxWeapons; i++)
                 {
-                    bw.Write(gameData.AmmoPosition[i].x);
-                    bw.Write(gameData.AmmoPosition[i].y);
+                    bw.Write(gameData.WeaponPosition[i].x);
+                    bw.Write(gameData.WeaponPosition[i].y);
                 }
-                for (int i = 0; i < balance.NumAmmo; i++)
+                for (int i = 0; i < balance.MaxWeapons; i++)
                 {
-                    bw.Write(gameData.AmmoDirection[i].x);
-                    bw.Write(gameData.AmmoDirection[i].y);
+                    bw.Write(gameData.WeaponDirection[i].x);
+                    bw.Write(gameData.WeaponDirection[i].y);
                 }
-                bw.Write(gameData.AliveAmmoCount);
-                bw.Write(gameData.DeadAmmoCount);
-                for (int i = 0; i < balance.NumAmmo; i++)
-                    bw.Write(gameData.AliveAmmoIdx[i]);
-                for (int i = 0; i < balance.NumAmmo; i++)
-                    bw.Write(gameData.DeadAmmoIdx[i]);
-                bw.Write(gameData.FiringRateTimer);
+                for (int i = 0; i < balance.MaxWeapons; i++)
+                    bw.Write(gameData.WeaponAngle[i]);
+
+                bw.Write(gameData.AliveWeaponCount);
+                bw.Write(gameData.DeadWeaponCount);
+                for (int i = 0; i < balance.MaxWeapons; i++)
+                    bw.Write(gameData.AliveWeaponIdx[i]);
+                for (int i = 0; i < balance.MaxWeapons; i++)
+                    bw.Write(gameData.DeadWeaponIdx[i]);
+                for (int i = 0; i < balance.MaxWeapons; i++)
+                bw.Write(gameData.FiringRateTimer[i]);
 
                 bw.Write(gameData.GameTime);
             }
@@ -83,25 +89,31 @@ namespace Survivor
 
                     gameData.PlayerDirection.x = br.ReadSingle();
                     gameData.PlayerDirection.y = br.ReadSingle();
+                    gameData.LastPlayerDirection.x = br.ReadSingle();
+                    gameData.LastPlayerDirection.y = br.ReadSingle();
 
-                    int numAmmo = br.ReadInt32();
-                    for (int i = 0; i < numAmmo; i++)
+                    int numWeapons = br.ReadInt32();
+                    for (int i = 0; i < numWeapons; i++)
                     {
-                        gameData.AmmoPosition[i].x = br.ReadSingle();
-                        gameData.AmmoPosition[i].y = br.ReadSingle();
+                        gameData.WeaponPosition[i].x = br.ReadSingle();
+                        gameData.WeaponPosition[i].y = br.ReadSingle();
                     }
-                    for (int i = 0; i < numAmmo; i++)
+                    for (int i = 0; i < numWeapons; i++)
                     {
-                        gameData.AmmoDirection[i].x = br.ReadSingle();
-                        gameData.AmmoDirection[i].y = br.ReadSingle();
+                        gameData.WeaponDirection[i].x = br.ReadSingle();
+                        gameData.WeaponDirection[i].y = br.ReadSingle();
                     }
-                    gameData.AliveAmmoCount = br.ReadInt32();
-                    gameData.DeadAmmoCount = br.ReadInt32();
-                    for (int i = 0; i < numAmmo; i++)
-                        gameData.AliveAmmoIdx[i] = br.ReadInt32();
-                    for (int i = 0; i < numAmmo; i++)
-                        gameData.DeadAmmoIdx[i] = br.ReadInt32();
-                    gameData.FiringRateTimer = br.ReadInt32();
+                    for (int i = 0; i < numWeapons; i++)
+                        gameData.WeaponAngle[i] = br.ReadSingle();
+
+                    gameData.AliveWeaponCount = br.ReadInt32();
+                    gameData.DeadWeaponCount = br.ReadInt32();
+                    for (int i = 0; i < numWeapons; i++)
+                        gameData.AliveWeaponIdx[i] = br.ReadInt32();
+                    for (int i = 0; i < numWeapons; i++)
+                        gameData.DeadWeaponIdx[i] = br.ReadInt32();
+                    for (int i = 0; i < numWeapons; i++)
+                    gameData.FiringRateTimer[i] = br.ReadInt32();
 
                     gameData.GameTime = br.ReadSingle();
                 }

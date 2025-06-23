@@ -6,19 +6,14 @@ namespace Survivor
     public class BalanceSO : ScriptableObject
     {
         [Header("Enemies")]
-        public int NumEnemies;
-        public float EnemyVelocity;
-        public float EnemyRadius;
+        public int MaxEnemies;
         public float SpawnRadius;
 
         [Header("Player")]
-        public float PlayerVelocity;
         public float MinCollisionDistance;
 
         [Header("Weapons")]
-        public int NumAmmo;
-        public float FiringRate;
-        public float AmmoVelocity;
-        public float AmmoRadius;
+        public int MaxWeapons;
+        public int MaxParticles;
     }
 }

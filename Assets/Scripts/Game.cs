@@ -20,7 +20,7 @@ namespace Survivor
 
         int m_screenShotIdx = 0;
 
-        void Awake()
+        protected override void Awake()
         {
             base.Awake();
 

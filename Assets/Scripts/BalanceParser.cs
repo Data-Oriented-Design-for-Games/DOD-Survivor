@@ -37,6 +37,29 @@ namespace Survivor
 
         public static void AssignIDs()
         {
+            List<Object> objects = new List<Object>();
+            int numObjects;
+
+            objects.Clear();
+            AddObjectsFromDirectory("Assets/Data/Weapons", objects, typeof(WeaponSO));
+            numObjects = objects.Count;
+            for (int i = 0; i < numObjects; i++)
+            {
+                WeaponSO weapon = (WeaponSO)objects[i];
+                weapon.ID = i;
+                EditorUtility.SetDirty(weapon);
+            }
+
+            objects.Clear();
+            AddObjectsFromDirectory("Assets/Data/Enemies", objects, typeof(EnemySO));
+            numObjects = objects.Count;
+            for (int i = 0; i < numObjects; i++)
+            {
+                EnemySO enemy = (EnemySO)objects[i];
+                enemy.ID = i;
+                EditorUtility.SetDirty(enemy);
+            }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -52,18 +75,65 @@ namespace Survivor
 
                     BalanceSO balanceSO = (BalanceSO)AssetDatabase.LoadAssetAtPath("Assets/Data/Balance.asset", typeof(BalanceSO));
 
-                    bw.Write(balanceSO.NumEnemies);
-                    bw.Write(balanceSO.EnemyVelocity);
-                    bw.Write(balanceSO.EnemyRadius);
+                    bw.Write(balanceSO.MaxEnemies);
                     bw.Write(balanceSO.SpawnRadius);
 
-                    bw.Write(balanceSO.PlayerVelocity);
                     bw.Write(balanceSO.MinCollisionDistance);
 
-                    bw.Write(balanceSO.NumAmmo);
-                    bw.Write(balanceSO.FiringRate);
-                    bw.Write(balanceSO.AmmoVelocity);
-                    bw.Write(balanceSO.AmmoRadius);
+                    bw.Write(balanceSO.MaxWeapons);
+                    bw.Write(balanceSO.MaxParticles);
+
+                    List<Object> objects = new List<Object>();
+
+                    objects.Clear();
+                    AddObjectsFromDirectory("Assets/Data/Players", objects, typeof(PlayerSO));
+                    int numPlayers = objects.Count;
+                    Debug.Log("numPlayers " + numPlayers);
+                    bw.Write(numPlayers);
+                    for (int playerIdx = 0; playerIdx < numPlayers; playerIdx++)
+                    {
+                        PlayerSO playerSO = (PlayerSO)objects[playerIdx];
+                        bw.Write(playerSO.AnimatedSprite.name);
+                        bw.Write(playerSO.HP);
+                        bw.Write(playerSO.Velocity);
+                        bw.Write(playerSO.Weapon.ID);
+                    }
+
+                    objects.Clear();
+                    AddObjectsFromDirectory("Assets/Data/Weapons", objects, typeof(WeaponSO));
+                    int numWeapons = objects.Count;
+                    Debug.Log("numWeapons " + numWeapons);
+                    bw.Write(numWeapons);
+                    for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
+                    {
+                        WeaponSO weaponSO = (WeaponSO)objects[weaponIdx];
+                        bw.Write(weaponSO.ID);
+                        bw.Write(weaponSO.AnimatedSprite.name);
+                        bw.Write(weaponSO.FiringRate);
+                        bw.Write(weaponSO.Velocity);
+                        bw.Write(weaponSO.AngularVelocity);
+                        bw.Write(weaponSO.TriggerRadius);
+                        bw.Write((byte)weaponSO.WeaponTarget);
+                        bw.Write(weaponSO.ExplosionRadius);
+                        bw.Write(weaponSO.Damage);
+                        float dontRemoveOnHit = weaponSO.RemoveOnHit ? 0.0f : 1.0f;
+                        bw.Write(dontRemoveOnHit);
+                    }
+
+                    objects.Clear();
+                    AddObjectsFromDirectory("Assets/Data/Enemies", objects, typeof(EnemySO));
+                    int numEnemies = objects.Count;
+                    Debug.Log("numEnemies " + numEnemies);
+                    bw.Write(numEnemies);
+                    for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
+                    {
+                        EnemySO enemySO = (EnemySO)objects[enemyIdx];
+                        bw.Write(enemySO.ID);
+                        bw.Write(enemySO.AnimatedSprite.name);
+                        bw.Write(enemySO.Velocity);
+                        bw.Write(enemySO.Radius);
+                        bw.Write(enemySO.HP);
+                    }
 
                     int magic = 123456789;
                     bw.Write(magic);
@@ -71,6 +141,23 @@ namespace Survivor
                 }
             }
         }
+
+        public static void AddObjectsFromDirectory(string path, List<Object> items, System.Type type)
+        {
+            if (Directory.Exists(path))
+            {
+                string[] assets = Directory.GetFiles(path);
+                foreach (string assetPath in assets)
+                    if (assetPath.Contains(".asset") && !assetPath.Contains(".meta"))
+                        items.Add(AssetDatabase.LoadAssetAtPath(assetPath, type));
+
+                string[] directories = Directory.GetDirectories(path);
+                foreach (string directory in directories)
+                    if (Directory.Exists(directory))
+                        AddObjectsFromDirectory(directory, items, type);
+            }
+        }
+
 #endif
     }
 }

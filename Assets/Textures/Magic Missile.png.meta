@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 82a9c8182d5744fb58e568f9428a435a
+guid: 0306d5047473740079067b3012f28c72
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -48,7 +48,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 16
+  spritePixelsToUnits: 8
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -123,13 +123,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Skeleton Walk Animation_0
+      name: Magic Missile_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 27
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +137,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 57284a84f78b842d3ae114f0fb64859f
-      internalID: 1930690606
+      spriteID: aa0dd23fc954a4d7cb12d9fd44567e29
+      internalID: -1298138986
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Skeleton Walk Animation_1
+      name: Magic Missile_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 27
         y: 0
-        width: 32
-        height: 32
+        width: 27
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -158,20 +158,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6d06d344bcede4984b966826d8f79c39
-      internalID: 1746153196
+      spriteID: c0f1c3e00c83744b29372fcfd5e35169
+      internalID: -1491731845
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Skeleton Walk Animation_2
+      name: Magic Missile_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 54
         y: 0
-        width: 32
-        height: 32
+        width: 27
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -179,20 +179,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 85e249eaca66f46d5be27ddca8d8ec8a
-      internalID: 1330866359
+      spriteID: 06efcedf90a2e4c77b645f3937e90312
+      internalID: 272862985
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Skeleton Walk Animation_3
+      name: Magic Missile_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 81
         y: 0
-        width: 32
-        height: 32
+        width: 27
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,8 +200,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7cd1ffed6a92645ee9c585050f3bb5ab
-      internalID: 6239019
+      spriteID: 57bdc9d13214f4d3b939ab7357c86937
+      internalID: 1938076936
       vertices: []
       indices: 
       edges: []
@@ -217,10 +217,10 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Skeleton Walk Animation_0: 1930690606
-      Skeleton Walk Animation_1: 1746153196
-      Skeleton Walk Animation_2: 1330866359
-      Skeleton Walk Animation_3: 6239019
+      Magic Missile_0: -1298138986
+      Magic Missile_1: -1491731845
+      Magic Missile_2: 272862985
+      Magic Missile_3: 1938076936
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

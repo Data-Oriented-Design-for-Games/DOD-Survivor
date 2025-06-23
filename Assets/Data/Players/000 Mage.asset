@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc697e48ee68d42d2b585d6b6553deba, type: 3}
+  m_Name: 000 Mage
+  m_EditorClassIdentifier: 
+  ID: 0
+  AnimatedSprite: {fileID: 1937349852102195255, guid: bef7bc733c981454ab7eff152be4d07a, type: 3}
+  HP: 100
+  Velocity: 3
+  Weapon: {fileID: 11400000, guid: 8326d9843171f4082b9175314c85572d, type: 2}

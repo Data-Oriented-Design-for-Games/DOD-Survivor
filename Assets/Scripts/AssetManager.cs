@@ -1,13 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using CommonTools;
 using UnityEngine;
+using UnityEditor;
 
 namespace Survivor
 {
     public class AssetManager : Singleton<AssetManager>
     {
+        public static bool UseAssetBundles = false;
+
         [SerializeField] AnimatedSprite m_playerPrefab;
         [SerializeField] AnimatedSprite m_enemyPrefab;
         [SerializeField] AnimatedSprite m_ammoPrefab;
@@ -21,19 +25,53 @@ namespace Survivor
         [SerializeField] GameOverVisual m_GameOverVisual;
         [SerializeField] PauseMenuVisual m_PauseMenuVisual;
 
-        public AnimatedSprite GetPlayer(Transform enemyParent)
+        AssetBundle m_commonBundle;
+
+        public void LoadCommonAssetBundle()
         {
-            return Instantiate(m_playerPrefab, enemyParent);
+#if UNITY_EDITOR
+            if (UseAssetBundles)
+                m_commonBundle = AssetBundle.LoadFromFile(Path.Combine(Application.streamingAssetsPath, "AssetBundles/common"));
+#else
+            m_commonBundle = AssetBundle.LoadFromFile(Path.Combine(Application.streamingAssetsPath, "AssetBundles/common"));
+#endif
         }
 
-        public AnimatedSprite GetEnemy(Transform enemyParent)
+        public void UnloadCommonAssetBundle()
         {
-            return Instantiate(m_enemyPrefab, enemyParent);
+            if (m_commonBundle != null)
+                m_commonBundle.Unload(true);
         }
 
-        public AnimatedSprite GetAmmo(Transform enemyParent)
+        GameObject loadGameObject(AssetBundle assetBundle, string objName, string localPath)
         {
-            return Instantiate(m_ammoPrefab, enemyParent);
+            Debug.Log("loadGameObject objName " + objName + " localPath " + localPath);
+
+            GameObject go = null;
+#if UNITY_EDITOR
+            if (UseAssetBundles)
+                go = assetBundle.LoadAsset<GameObject>(objName);
+            else
+                go = (GameObject)AssetDatabase.LoadAssetAtPath(localPath, typeof(GameObject));
+#else
+            go = assetBundle.LoadAsset<GameObject>(objName);
+#endif
+            return go;
+        }
+
+        public AnimatedSprite GetPlayer(string playerName, Transform enemyParent)
+        {
+            return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab")).GetComponent<AnimatedSprite>();
+        }
+
+        public AnimatedSprite GetEnemy(string enemyName, Transform enemyParent)
+        {
+            return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies/" + enemyName + ".prefab")).GetComponent<AnimatedSprite>();
+        }
+
+        public AnimatedSprite GetWeapon(string weaponName, Transform enemyParent)
+        {
+            return Instantiate(loadGameObject(m_commonBundle, weaponName, "Assets/Prefabs/Common/Weapons/" + weaponName + ".prefab")).GetComponent<AnimatedSprite>();
         }
 
         public GameObject GetInGameUI()

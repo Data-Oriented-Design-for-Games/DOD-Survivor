@@ -18,6 +18,7 @@ namespace Survivor
         AnimatedSprite m_player;
         AnimatedSprite[] m_enemyPool;
         AnimatedSprite[] m_ammoPool;
+        AnimatedSprite[] m_particlePool;
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -58,7 +59,7 @@ namespace Survivor
             this.balance = balance;
 
             // player
-            m_player = AssetManager.Instance.GetPlayer(SpriteParent);
+            m_player = AssetManager.Instance.GetPlayer(balance.PlayerBalance.PlayerBalanceData[0].SpriteName, SpriteParent);
             m_player.transform.localPosition = Vector2.zero;
 
             m_visualBoardData.PlayerSpriteAnimData.FrameIndex = 0;
@@ -67,15 +68,15 @@ namespace Survivor
             m_visualBoardData.PlayerSpriteAnimData.NumFrames = m_player.Sprites.Length;
 
             // enemies
-            m_enemyPool = new AnimatedSprite[balance.NumEnemies];
-            for (int i = 0; i < balance.NumEnemies; i++)
+            m_enemyPool = new AnimatedSprite[balance.MaxEnemies];
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
-                m_enemyPool[i] = AssetManager.Instance.GetEnemy(SpriteParent);
+                m_enemyPool[i] = AssetManager.Instance.GetEnemy(balance.EnemyBalance.SpriteName[0], SpriteParent);
                 m_enemyPool[i].gameObject.SetActive(false);
             }
 
-            m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.NumEnemies];
-            for (int i = 0; i < balance.NumEnemies; i++)
+            m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.MaxEnemies];
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
                 m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = 0;
                 m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft = m_enemyPool[i].FrameTime;
@@ -84,21 +85,24 @@ namespace Survivor
             }
 
             // ammo
-            m_ammoPool = new AnimatedSprite[balance.NumAmmo];
-            for (int i = 0; i < balance.NumAmmo; i++)
+            m_ammoPool = new AnimatedSprite[balance.MaxWeapons];
+            for (int i = 0; i < balance.MaxWeapons; i++)
             {
-                m_ammoPool[i] = AssetManager.Instance.GetAmmo(SpriteParent);
+                m_ammoPool[i] = AssetManager.Instance.GetWeapon(balance.WeaponBalance.SpriteName[0], SpriteParent);
                 m_ammoPool[i].gameObject.SetActive(false);
             }
 
-            m_visualBoardData.AmmoSpriteAnimData = new SpriteAnimationData[balance.NumAmmo];
-            for (int i = 0; i < balance.NumAmmo; i++)
+            m_visualBoardData.AmmoSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
+            for (int i = 0; i < balance.MaxWeapons; i++)
             {
                 m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = 0;
                 m_visualBoardData.AmmoSpriteAnimData[i].FrameTimeLeft = m_ammoPool[i].FrameTime;
                 m_visualBoardData.AmmoSpriteAnimData[i].FrameTime = m_ammoPool[i].FrameTime;
                 m_visualBoardData.AmmoSpriteAnimData[i].NumFrames = m_ammoPool[i].Sprites.Length;
             }
+
+            // particles
+            m_particlePool = new AnimatedSprite[balance.MaxParticles];
 
             // GUI
             m_boardGUI = new BoardGUI();
@@ -121,14 +125,14 @@ namespace Survivor
 
         public void Show()
         {
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
                 m_enemyPool[i].gameObject.SetActive(true);
                 m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
             }
 
-            for (int i = 0; i < balance.NumAmmo; i++)
+            for (int i = 0; i < balance.MaxWeapons; i++)
             {
                 m_ammoPool[i].gameObject.SetActive(false);
                 m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.AmmoSpriteAnimData[i].NumFrames);
@@ -141,7 +145,7 @@ namespace Survivor
 
         public void Hide()
         {
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
                 m_enemyPool[i].gameObject.SetActive(false);
             m_player.gameObject.SetActive(false);
 
@@ -158,23 +162,23 @@ namespace Survivor
             handleInput();
 
             bool isGameOver;
-            Span<int> firedAmmoIdxs = stackalloc int[balance.NumAmmo];
-            int firedAmmoCount;
-            Span<int> deadAmmoIdxs = stackalloc int[balance.NumEnemies];
-            int deadAmmoCount;
-            Logic.Tick(metaData, gameData, balance, dt, firedAmmoIdxs, out firedAmmoCount, deadAmmoIdxs, out deadAmmoCount, out isGameOver);
+            Span<int> firedWeaponIdxs = stackalloc int[balance.MaxWeapons];
+            int firedWeaponCount;
+            Span<int> deadWeaponIdxs = stackalloc int[balance.MaxEnemies];
+            int deadWeaponCount;
+            Logic.Tick(metaData, gameData, balance, dt, firedWeaponIdxs, out firedWeaponCount, deadWeaponIdxs, out deadWeaponCount, out isGameOver);
 
-            updateVisuals(firedAmmoIdxs, firedAmmoCount, deadAmmoIdxs, deadAmmoCount, dt);
+            updateVisuals(firedWeaponIdxs, firedWeaponCount, deadWeaponIdxs, deadWeaponCount, dt);
 
             if (isGameOver)
                 gameOver();
         }
 
         private void updateVisuals(
-            Span<int> firedAmmoIdxs,
-            int firedAmmoCount,
-            Span<int> deadAmmoIdsx,
-            int deadAmmoCount,
+            Span<int> firedWeaponIdxs,
+            int firedWeaponCount,
+            Span<int> deadWeaponIdsx,
+            int deadWeaponCount,
             float dt)
         {
             // player
@@ -189,14 +193,14 @@ namespace Survivor
             m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
 
             // enemies
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
-                float scaleX = m_enemyPool[i].transform.localPosition.x > 0.0f ? 1.0f : -1.0f;
+                float scaleX = m_enemyPool[i].transform.localPosition.x < 0.0f ? 1.0f : -1.0f;
                 m_enemyPool[i].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f);
             }
 
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
                 m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft -= dt;
                 if (m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft <= 0.0f)
@@ -206,7 +210,7 @@ namespace Survivor
                     m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = true;
                 }
             }
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
             {
                 if (m_visualBoardData.EnemySpriteAnimData[i].FrameChanged)
                 {
@@ -216,25 +220,26 @@ namespace Survivor
             }
 
             // ammo
-            for (int i = 0; i < firedAmmoCount; i++)
+            for (int i = 0; i < firedWeaponCount; i++)
             {
-                int ammoIdx = firedAmmoIdxs[i];
-                m_ammoPool[ammoIdx].gameObject.SetActive(true);
+                int weaponIdx = firedWeaponIdxs[i];
+                m_ammoPool[weaponIdx].gameObject.SetActive(true);
             }
-            for (int i = 0; i < deadAmmoCount; i++)
+            for (int i = 0; i < deadWeaponCount; i++)
             {
-                int ammoIdx = deadAmmoIdsx[i];
-                m_ammoPool[ammoIdx].gameObject.SetActive(false);
+                int weaponIdx = deadWeaponIdsx[i];
+                m_ammoPool[weaponIdx].gameObject.SetActive(false);
             }
 
-            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            for (int i = 0; i < gameData.AliveWeaponCount; i++)
             {
-                int ammoIdx = gameData.AliveAmmoIdx[i];
-                m_ammoPool[ammoIdx].transform.localPosition = gameData.AmmoPosition[ammoIdx];
+                int weaponIdx = gameData.AliveWeaponIdx[i];
+                m_ammoPool[weaponIdx].transform.localPosition = gameData.WeaponPosition[weaponIdx];
+                m_ammoPool[weaponIdx].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIdx]);
             }
 
             // ui
-            for (int i = 0; i < balance.NumEnemies; i++)
+            for (int i = 0; i < balance.MaxEnemies; i++)
                 m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
         }
 
@@ -278,6 +283,33 @@ mousePosition = Input.GetTouch(0).position;
             {
                 InputCircleOut.SetActive(false);
                 Logic.MouseUp(gameData);
+            }
+
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                Span<int> firedWeaponIdxs = stackalloc int[balance.MaxWeapons];
+                int firedWeaponCount = 0;
+
+                Logic.TestFireWeapon(gameData, balance, (1.0f / 60.0f), firedWeaponIdxs, ref firedWeaponCount);
+                for (int i = 0; i < firedWeaponCount; i++)
+                {
+                    int weaponIdx = firedWeaponIdxs[i];
+                    m_ammoPool[weaponIdx].gameObject.SetActive(true);
+                    int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
+                    Debug.DrawLine(m_ammoPool[weaponIdx].transform.position, m_enemyPool[enemyIdx].transform.position, Color.white, 1.0f);
+                }
+            }
+            if (Input.GetKeyUp(KeyCode.D))
+            {
+                for (int i = 0; i < gameData.AliveWeaponCount; i++)
+                {
+                    int weaponIdx = gameData.AliveWeaponIdx[i];
+                    int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
+                    Debug.Log("enemyIdx " + enemyIdx);
+                    Debug.DrawLine(m_ammoPool[weaponIdx].transform.position, SpriteParent.TransformPoint(gameData.WeaponTargetPos[weaponIdx]), Color.white, 1.0f);
+                    Debug.Log("draw line!");
+                }
+
             }
         }
 

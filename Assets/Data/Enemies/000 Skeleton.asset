@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccacb6c2ec8074dbdbc596fa034238c3, type: 3}
-  m_Name: Balance
+  m_Script: {fileID: 11500000, guid: 0ae8f6874dd0941c6b6649e82c23dd78, type: 3}
+  m_Name: 000 Skeleton
   m_EditorClassIdentifier: 
-  MaxEnemies: 1000
-  SpawnRadius: 7
-  MinCollisionDistance: 0.1
-  MaxWeapons: 1000
-  MaxParticles: 1000
+  ID: 0
+  AnimatedSprite: {fileID: 2847892865747687350, guid: 3ccd6d6c905484347b8617520424db03, type: 3}
+  Velocity: 0.2
+  Radius: 0.1
+  HP: 10

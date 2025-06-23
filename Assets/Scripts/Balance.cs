@@ -3,27 +3,63 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Threading;
 
 namespace Survivor
 {
+    public class EnemyBalance
+    {
+        public int[] ID;
+        public string[] SpriteName;
+        public float[] Velocity;
+        public float[] Radius;
+        public float[] HP;
+    }
+
+    public class WeaponBalance
+    {
+        public int[] ID;
+        public string[] SpriteName;
+        public float[] FiringRate;
+        public float[] Velocity;
+        public float[] AngularVelocity;
+        public float[] TriggerRadius;
+        public AMMO_TARGET[] AmmoTarget;
+        public float[] ExplosionRadius;
+        public int[] Damage;
+        public float[] DontRemoveOnHit;
+    }
+
+    public struct PlayerBalanceData
+    {
+        public string SpriteName;
+        public int HP;
+        public float Velocity;
+        public int WeaponID;
+    }
+
+    public class PlayerBalance
+    {
+        public PlayerBalanceData[] PlayerBalanceData;
+    }
+
     [Serializable]
     public class Balance
     {
-        [Header ("Enemies")]
-        public int NumEnemies;
-        public float EnemyVelocity;
-        public float EnemyRadius;
+        [Header("Enemies")]
+        public int MaxEnemies;
         public float SpawnRadius;
 
-        [Header ("Player")]
-        public float PlayerVelocity;
+        [Header("Player")]
         public float MinCollisionDistance;
 
         [Header("Weapons")]
-        public int NumAmmo;
-        public float FiringRate;
-        public float AmmoVelocity;
-        public float AmmoRadius;
+        public int MaxWeapons;
+        public int MaxParticles;
+
+        public PlayerBalance PlayerBalance = new PlayerBalance();
+        public WeaponBalance WeaponBalance = new WeaponBalance();
+        public EnemyBalance EnemyBalance = new EnemyBalance();
 
         public void LoadBalance()
         {
@@ -38,18 +74,63 @@ namespace Survivor
             {
                 int version = br.ReadInt32();
 
-                NumEnemies = br.ReadInt32();
-                EnemyVelocity = br.ReadSingle();
-                EnemyRadius = br.ReadSingle();
+                MaxEnemies = br.ReadInt32();
                 SpawnRadius = br.ReadSingle();
 
-                PlayerVelocity = br.ReadSingle();
                 MinCollisionDistance = br.ReadSingle();
 
-                NumAmmo = br.ReadInt32();
-                FiringRate = br.ReadSingle();
-                AmmoVelocity = br.ReadSingle();
-                AmmoRadius = br.ReadSingle();
+                MaxWeapons = br.ReadInt32();
+                MaxParticles = br.ReadInt32();
+
+                int numPlayers = br.ReadInt32();
+                PlayerBalance.PlayerBalanceData = new PlayerBalanceData[numPlayers];
+                for (int playerIdx = 0; playerIdx < numPlayers; playerIdx++)
+                {
+                    PlayerBalance.PlayerBalanceData[playerIdx].SpriteName = br.ReadString();
+                    PlayerBalance.PlayerBalanceData[playerIdx].HP = br.ReadInt32();
+                    PlayerBalance.PlayerBalanceData[playerIdx].Velocity = br.ReadSingle();
+                    PlayerBalance.PlayerBalanceData[playerIdx].WeaponID = br.ReadInt32();
+                }
+
+                int numWeapons = br.ReadInt32();
+                WeaponBalance.ID = new int[numWeapons];
+                WeaponBalance.SpriteName = new string[numWeapons];
+                WeaponBalance.FiringRate = new float[numWeapons];
+                WeaponBalance.Velocity = new float[numWeapons];
+                WeaponBalance.AngularVelocity = new float[numWeapons];
+                WeaponBalance.TriggerRadius = new float[numWeapons];
+                WeaponBalance.AmmoTarget = new AMMO_TARGET[numWeapons];
+                WeaponBalance.ExplosionRadius = new float[numWeapons];
+                WeaponBalance.Damage = new int[numWeapons];
+                WeaponBalance.DontRemoveOnHit = new float[numWeapons];
+                for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
+                {
+                    WeaponBalance.ID[weaponIdx] = br.ReadInt32();
+                    WeaponBalance.SpriteName[weaponIdx] = br.ReadString();
+                    WeaponBalance.FiringRate[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.Velocity[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.AngularVelocity[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.TriggerRadius[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.AmmoTarget[weaponIdx] = (AMMO_TARGET)br.ReadByte();
+                    WeaponBalance.ExplosionRadius[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.Damage[weaponIdx] = br.ReadInt32();
+                    WeaponBalance.DontRemoveOnHit[weaponIdx] = br.ReadSingle();
+                }
+
+                int numEnemies = br.ReadInt32();
+                EnemyBalance.ID = new int[numEnemies];
+                EnemyBalance.SpriteName = new string[numEnemies];
+                EnemyBalance.Velocity = new float[numEnemies];
+                EnemyBalance.Radius = new float[numEnemies];
+                EnemyBalance.HP = new float[numEnemies];
+                for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
+                {
+                    EnemyBalance.ID[enemyIdx] = br.ReadInt32();
+                    EnemyBalance.SpriteName[enemyIdx] = br.ReadString();
+                    EnemyBalance.Velocity[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.Radius[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.HP[enemyIdx] = br.ReadSingle();
+                }
 
                 int magic = br.ReadInt32();
                 Debug.Log(magic);
