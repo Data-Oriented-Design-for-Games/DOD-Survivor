@@ -89,7 +89,7 @@ namespace Survivor
             m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
             for (int i = 0; i < balance.MaxWeapons; i++)
                 CommonVisual.InitSpriteFrameData(ref m_visualBoardData.WeaponSpriteAnimData[i], m_weaponPool[i]);
-                
+
             // particles
             m_explosionPool.Init(balance, SpriteParent);
 
@@ -281,20 +281,7 @@ mousePosition = Input.GetTouch(0).position;
                     int weaponIdx = firedWeaponIdxs[i];
                     m_weaponPool[weaponIdx].gameObject.SetActive(true);
                     int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
-                    Debug.DrawLine(m_weaponPool[weaponIdx].transform.position, m_enemyPool[enemyIdx].transform.position, Color.white, 1.0f);
                 }
-            }
-            if (Input.GetKeyUp(KeyCode.D))
-            {
-                for (int i = 0; i < gameData.AliveWeaponCount; i++)
-                {
-                    int weaponIdx = gameData.AliveWeaponIdx[i];
-                    int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
-                    Debug.Log("enemyIdx " + enemyIdx);
-                    Debug.DrawLine(m_weaponPool[weaponIdx].transform.position, SpriteParent.TransformPoint(gameData.WeaponTargetPos[weaponIdx]), Color.white, 1.0f);
-                    Debug.Log("draw line!");
-                }
-
             }
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Survivor
 {
-    public class ExplosionPool
+    public class EnemyPool
     {
         PoolData m_poolData;
 
@@ -20,7 +20,7 @@ namespace Survivor
             CommonPool.Init(m_poolData, balance.MaxParticles);
         }
 
-        public void ShowExplosion(int weaponType, Vector2 position)
+        public void ShowEnemy(int weaponType, Vector2 position)
         {
             int index = getFreePoolIndex(weaponType);
 
@@ -36,7 +36,7 @@ namespace Survivor
                 index = CommonPool.GetNewPoolItemIndex(m_poolData, weaponType);
 
                 string name = balance.WeaponBalance.ExplosionName[weaponType];
-                m_poolData.Pool[index] = AssetManager.Instance.GetParticle(name, spriteParent);
+                m_poolData.Pool[index] = AssetManager.Instance.GetEnemy(name, spriteParent);
             }
 
             CommonVisual.InitSpriteFrameData(ref m_poolData.m_spriteAnimationData[index], m_poolData.Pool[index]);
