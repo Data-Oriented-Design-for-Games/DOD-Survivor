@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ae8f6874dd0941c6b6649e82c23dd78, type: 3}
-  m_Name: 000 Skeleton
+  m_Name: 0000 Skeleton
   m_EditorClassIdentifier: 
   ID: 0
   AnimatedSprite: {fileID: 2847892865747687350, guid: 3ccd6d6c905484347b8617520424db03, type: 3}

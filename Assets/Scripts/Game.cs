@@ -40,10 +40,11 @@ namespace Survivor
 
             m_balance.LoadBalance();
             Logic.AllocateGameData(m_gameData, m_balance);
-            Board.Init(m_metaData, m_gameData, m_balance, MainCamera);
 
             MetaDataIO.Load(m_metaData);
             Logic.Init(m_metaData);
+
+            Board.Init(m_metaData, m_gameData, m_balance, MainCamera);
 
             SetMenuState(MENU_STATE.MAIN_MENU);
         }

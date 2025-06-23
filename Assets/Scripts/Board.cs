@@ -11,14 +11,25 @@ namespace Survivor
         public TextMeshProUGUI GameTimeText;
     }
 
+    public struct SpriteAnimationData
+    {
+        public int FrameIndex;
+        public int NumFrames;
+        public float FrameTimeLeft;
+        public float FrameTime;
+        public bool FrameChanged;
+    }
+
+
     public class Board : MonoBehaviour
     {
         public Transform SpriteParent;
 
         AnimatedSprite m_player;
         AnimatedSprite[] m_enemyPool;
-        AnimatedSprite[] m_ammoPool;
-        AnimatedSprite[] m_particlePool;
+        AnimatedSprite[] m_weaponPool;
+
+        ExplosionPool m_explosionPool = new ExplosionPool();
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -32,20 +43,11 @@ namespace Survivor
         MetaData metaData;
         Balance balance;
 
-        public struct SpriteAnimationData
-        {
-            public int FrameIndex;
-            public int NumFrames;
-            public float FrameTimeLeft;
-            public float FrameTime;
-            public bool FrameChanged;
-        }
-
         public class VisualBoardData
         {
             public SpriteAnimationData PlayerSpriteAnimData;
             public SpriteAnimationData[] EnemySpriteAnimData;
-            public SpriteAnimationData[] AmmoSpriteAnimData;
+            public SpriteAnimationData[] WeaponSpriteAnimData;
         }
 
         VisualBoardData m_visualBoardData = new VisualBoardData();
@@ -59,50 +61,37 @@ namespace Survivor
             this.balance = balance;
 
             // player
-            m_player = AssetManager.Instance.GetPlayer(balance.PlayerBalance.PlayerBalanceData[0].SpriteName, SpriteParent);
+            m_player = AssetManager.Instance.GetPlayer(balance.PlayerBalance.PlayerBalanceData[gameData.PlayerType].SpriteName, SpriteParent);
             m_player.transform.localPosition = Vector2.zero;
 
-            m_visualBoardData.PlayerSpriteAnimData.FrameIndex = 0;
-            m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft = m_player.FrameTime;
-            m_visualBoardData.PlayerSpriteAnimData.FrameTime = m_player.FrameTime;
-            m_visualBoardData.PlayerSpriteAnimData.NumFrames = m_player.Sprites.Length;
+            CommonVisual.InitSpriteFrameData(ref m_visualBoardData.PlayerSpriteAnimData, m_player);
 
             // enemies
             m_enemyPool = new AnimatedSprite[balance.MaxEnemies];
             for (int i = 0; i < balance.MaxEnemies; i++)
             {
-                m_enemyPool[i] = AssetManager.Instance.GetEnemy(balance.EnemyBalance.SpriteName[0], SpriteParent);
+                m_enemyPool[i] = AssetManager.Instance.GetEnemy(balance.EnemyBalance.SpriteName[gameData.EnemyType], SpriteParent);
                 m_enemyPool[i].gameObject.SetActive(false);
             }
 
             m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.MaxEnemies];
             for (int i = 0; i < balance.MaxEnemies; i++)
-            {
-                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = 0;
-                m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft = m_enemyPool[i].FrameTime;
-                m_visualBoardData.EnemySpriteAnimData[i].FrameTime = m_enemyPool[i].FrameTime;
-                m_visualBoardData.EnemySpriteAnimData[i].NumFrames = m_enemyPool[i].Sprites.Length;
-            }
+                CommonVisual.InitSpriteFrameData(ref m_visualBoardData.EnemySpriteAnimData[i], m_enemyPool[i]);
 
             // ammo
-            m_ammoPool = new AnimatedSprite[balance.MaxWeapons];
+            m_weaponPool = new AnimatedSprite[balance.MaxWeapons];
             for (int i = 0; i < balance.MaxWeapons; i++)
             {
-                m_ammoPool[i] = AssetManager.Instance.GetWeapon(balance.WeaponBalance.SpriteName[0], SpriteParent);
-                m_ammoPool[i].gameObject.SetActive(false);
+                m_weaponPool[i] = AssetManager.Instance.GetWeapon(balance.WeaponBalance.SpriteName[gameData.WeaponType], SpriteParent);
+                m_weaponPool[i].gameObject.SetActive(false);
             }
 
-            m_visualBoardData.AmmoSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
+            m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
             for (int i = 0; i < balance.MaxWeapons; i++)
-            {
-                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = 0;
-                m_visualBoardData.AmmoSpriteAnimData[i].FrameTimeLeft = m_ammoPool[i].FrameTime;
-                m_visualBoardData.AmmoSpriteAnimData[i].FrameTime = m_ammoPool[i].FrameTime;
-                m_visualBoardData.AmmoSpriteAnimData[i].NumFrames = m_ammoPool[i].Sprites.Length;
-            }
-
+                CommonVisual.InitSpriteFrameData(ref m_visualBoardData.WeaponSpriteAnimData[i], m_weaponPool[i]);
+                
             // particles
-            m_particlePool = new AnimatedSprite[balance.MaxParticles];
+            m_explosionPool.Init(balance, SpriteParent);
 
             // GUI
             m_boardGUI = new BoardGUI();
@@ -130,12 +119,14 @@ namespace Survivor
                 m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
                 m_enemyPool[i].gameObject.SetActive(true);
                 m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
+                m_enemyPool[i].SetSpriteFrame(m_visualBoardData.EnemySpriteAnimData[i].FrameIndex);
             }
 
             for (int i = 0; i < balance.MaxWeapons; i++)
             {
-                m_ammoPool[i].gameObject.SetActive(false);
-                m_visualBoardData.AmmoSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.AmmoSpriteAnimData[i].NumFrames);
+                m_weaponPool[i].gameObject.SetActive(false);
+                m_visualBoardData.WeaponSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.WeaponSpriteAnimData[i].NumFrames);
+                m_weaponPool[i].SetSpriteFrame(m_visualBoardData.WeaponSpriteAnimData[i].FrameIndex);
             }
 
             m_player.gameObject.SetActive(true);
@@ -182,13 +173,9 @@ namespace Survivor
             float dt)
         {
             // player
-            m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft -= dt;
-            if (m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft <= 0.0f)
-            {
-                m_visualBoardData.PlayerSpriteAnimData.FrameIndex = (m_visualBoardData.PlayerSpriteAnimData.FrameIndex + 1) % m_visualBoardData.PlayerSpriteAnimData.NumFrames;
-                m_visualBoardData.PlayerSpriteAnimData.FrameTimeLeft += m_visualBoardData.PlayerSpriteAnimData.FrameTime;
-                m_player.SetSpriteFrame(m_visualBoardData.PlayerSpriteAnimData.FrameIndex);
-            }
+            CommonVisual.AnimateSprite(dt, ref m_visualBoardData.PlayerSpriteAnimData);
+            CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.PlayerSpriteAnimData, m_player);
+
             float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
             m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
 
@@ -201,41 +188,39 @@ namespace Survivor
             }
 
             for (int i = 0; i < balance.MaxEnemies; i++)
-            {
-                m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft -= dt;
-                if (m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft <= 0.0f)
-                {
-                    m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = (m_visualBoardData.EnemySpriteAnimData[i].FrameIndex + 1) % m_visualBoardData.EnemySpriteAnimData[i].NumFrames;
-                    m_visualBoardData.EnemySpriteAnimData[i].FrameTimeLeft += m_visualBoardData.EnemySpriteAnimData[i].FrameTime;
-                    m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = true;
-                }
-            }
+                CommonVisual.AnimateSprite(dt, ref m_visualBoardData.EnemySpriteAnimData[i]);
             for (int i = 0; i < balance.MaxEnemies; i++)
-            {
-                if (m_visualBoardData.EnemySpriteAnimData[i].FrameChanged)
-                {
-                    m_enemyPool[i].SetSpriteFrame(m_visualBoardData.EnemySpriteAnimData[i].FrameIndex);
-                    m_visualBoardData.EnemySpriteAnimData[i].FrameChanged = false;
-                }
-            }
+                CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.EnemySpriteAnimData[i], m_enemyPool[i]);
 
-            // ammo
+            // weapons
             for (int i = 0; i < firedWeaponCount; i++)
             {
                 int weaponIdx = firedWeaponIdxs[i];
-                m_ammoPool[weaponIdx].gameObject.SetActive(true);
+                m_weaponPool[weaponIdx].gameObject.SetActive(true);
             }
             for (int i = 0; i < deadWeaponCount; i++)
             {
                 int weaponIdx = deadWeaponIdsx[i];
-                m_ammoPool[weaponIdx].gameObject.SetActive(false);
+                if (balance.WeaponBalance.ExplosionRadius[gameData.WeaponType] > 0.0f)
+                {
+                    m_explosionPool.ShowExplosion(gameData.WeaponType, m_weaponPool[weaponIdx].transform.localPosition);
+                }
+                m_weaponPool[weaponIdx].gameObject.SetActive(false);
             }
+            m_explosionPool.Tick(dt);
 
             for (int i = 0; i < gameData.AliveWeaponCount; i++)
             {
                 int weaponIdx = gameData.AliveWeaponIdx[i];
-                m_ammoPool[weaponIdx].transform.localPosition = gameData.WeaponPosition[weaponIdx];
-                m_ammoPool[weaponIdx].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIdx]);
+                CommonVisual.AnimateSprite(dt, ref m_visualBoardData.WeaponSpriteAnimData[weaponIdx]);
+            }
+            for (int i = 0; i < gameData.AliveWeaponCount; i++)
+            {
+                int weaponIdx = gameData.AliveWeaponIdx[i];
+                m_weaponPool[weaponIdx].transform.localPosition = gameData.WeaponPosition[weaponIdx];
+                m_weaponPool[weaponIdx].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIdx]);
+
+                CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.WeaponSpriteAnimData[weaponIdx], m_weaponPool[weaponIdx]);
             }
 
             // ui
@@ -294,9 +279,9 @@ mousePosition = Input.GetTouch(0).position;
                 for (int i = 0; i < firedWeaponCount; i++)
                 {
                     int weaponIdx = firedWeaponIdxs[i];
-                    m_ammoPool[weaponIdx].gameObject.SetActive(true);
+                    m_weaponPool[weaponIdx].gameObject.SetActive(true);
                     int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
-                    Debug.DrawLine(m_ammoPool[weaponIdx].transform.position, m_enemyPool[enemyIdx].transform.position, Color.white, 1.0f);
+                    Debug.DrawLine(m_weaponPool[weaponIdx].transform.position, m_enemyPool[enemyIdx].transform.position, Color.white, 1.0f);
                 }
             }
             if (Input.GetKeyUp(KeyCode.D))
@@ -306,7 +291,7 @@ mousePosition = Input.GetTouch(0).position;
                     int weaponIdx = gameData.AliveWeaponIdx[i];
                     int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
                     Debug.Log("enemyIdx " + enemyIdx);
-                    Debug.DrawLine(m_ammoPool[weaponIdx].transform.position, SpriteParent.TransformPoint(gameData.WeaponTargetPos[weaponIdx]), Color.white, 1.0f);
+                    Debug.DrawLine(m_weaponPool[weaponIdx].transform.position, SpriteParent.TransformPoint(gameData.WeaponTargetPos[weaponIdx]), Color.white, 1.0f);
                     Debug.Log("draw line!");
                 }
 

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc697e48ee68d42d2b585d6b6553deba, type: 3}
-  m_Name: 000 Mage
+  m_Name: 0000 Mage
   m_EditorClassIdentifier: 
   ID: 0
   AnimatedSprite: {fileID: 1937349852102195255, guid: bef7bc733c981454ab7eff152be4d07a, type: 3}

@@ -59,20 +59,26 @@ namespace Survivor
             return go;
         }
 
-        public AnimatedSprite GetPlayer(string playerName, Transform enemyParent)
+        public AnimatedSprite GetPlayer(string playerName, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab")).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
         }
 
-        public AnimatedSprite GetEnemy(string enemyName, Transform enemyParent)
+        public AnimatedSprite GetEnemy(string enemyName, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies/" + enemyName + ".prefab")).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies/" + enemyName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
         }
 
-        public AnimatedSprite GetWeapon(string weaponName, Transform enemyParent)
+        public AnimatedSprite GetWeapon(string weaponName, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, weaponName, "Assets/Prefabs/Common/Weapons/" + weaponName + ".prefab")).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, weaponName, "Assets/Prefabs/Common/Weapons/" + weaponName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
         }
+
+        public AnimatedSprite GetParticle(string particleName, Transform spriteParent)
+        {
+            return Instantiate(loadGameObject(m_commonBundle, particleName, "Assets/Prefabs/Common/Particles/" + particleName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
+        }
+
 
         public GameObject GetInGameUI()
         {

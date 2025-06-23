@@ -20,6 +20,8 @@ namespace Survivor
     {
         public int[] ID;
         public string[] SpriteName;
+        public string[] ExplosionName;
+        public string[] TrailName;
         public float[] FiringRate;
         public float[] Velocity;
         public float[] AngularVelocity;
@@ -95,6 +97,8 @@ namespace Survivor
                 int numWeapons = br.ReadInt32();
                 WeaponBalance.ID = new int[numWeapons];
                 WeaponBalance.SpriteName = new string[numWeapons];
+                WeaponBalance.ExplosionName = new string[numWeapons];
+                WeaponBalance.TrailName = new string[numWeapons];
                 WeaponBalance.FiringRate = new float[numWeapons];
                 WeaponBalance.Velocity = new float[numWeapons];
                 WeaponBalance.AngularVelocity = new float[numWeapons];
@@ -107,6 +111,8 @@ namespace Survivor
                 {
                     WeaponBalance.ID[weaponIdx] = br.ReadInt32();
                     WeaponBalance.SpriteName[weaponIdx] = br.ReadString();
+                    WeaponBalance.ExplosionName[weaponIdx] = br.ReadString();
+                    WeaponBalance.TrailName[weaponIdx] = br.ReadString();
                     WeaponBalance.FiringRate[weaponIdx] = br.ReadSingle();
                     WeaponBalance.Velocity[weaponIdx] = br.ReadSingle();
                     WeaponBalance.AngularVelocity[weaponIdx] = br.ReadSingle();

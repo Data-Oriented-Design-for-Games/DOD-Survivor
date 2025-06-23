@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7161007169233870378}
   - component: {fileID: 1937349852102195255}
   m_Layer: 0
-  m_Name: 000 Mage
+  m_Name: 0000 Mage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

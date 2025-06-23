@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 5540518503602066869}
   - component: {fileID: 4290713088227431407}
   m_Layer: 0
-  m_Name: 000 Magic Missile
+  m_Name: 0000 Magic Missile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

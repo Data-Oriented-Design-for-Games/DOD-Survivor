@@ -49,7 +49,7 @@ namespace Survivor
 
             gameData.PlayerType = 0;
             gameData.EnemyType = 0;
-            gameData.WeaponType = 0;
+            gameData.WeaponType = 1;
         }
 
         static Vector2 spawnEnemy(GameData gameData, Balance balance)
@@ -143,7 +143,7 @@ namespace Survivor
             deadWeaponCount = 0;
 
             // Weapon
-            tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
+            //tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
             moveWeapons(gameData, balance, dt);
 
@@ -282,7 +282,7 @@ namespace Survivor
                         if (balance.WeaponBalance.DontRemoveOnHit[gameData.WeaponType] <= 0.0f)
                         {
                             deadWeaponIdxs[deadWeaponCount++] = weaponIdx;
-                            removeIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
+                            RemoveIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
                             gameData.DeadWeaponIdx[gameData.DeadWeaponCount++] = weaponIdx;
                         }
 
@@ -337,7 +337,7 @@ namespace Survivor
                 if (gameData.WeaponPosition[weaponIdx].sqrMagnitude > distanceSqr)
                 {
                     deadWeaponIdxs[deadWeaponCount++] = weaponIdx;
-                    removeIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
+                    RemoveIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
                     gameData.DeadWeaponIdx[gameData.DeadWeaponCount++] = weaponIdx;
 
                     Debug.Log("Weapon out of bounds " + weaponIdx + " gameData.DeadWeaponCount " + gameData.DeadWeaponCount + " gameData.AliveWeaponCount " + gameData.AliveWeaponCount);
@@ -356,7 +356,7 @@ namespace Survivor
                     checkWeaponEnemyExplosion(gameData, balance, gameData.WeaponPosition[weaponIdx]);
 
                     deadWeaponIdxs[deadWeaponCount++] = weaponIdx;
-                    removeIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
+                    RemoveIndexFromArray(gameData.AliveWeaponIdx, ref gameData.AliveWeaponCount, weaponIdx);
                     gameData.DeadWeaponIdx[gameData.DeadWeaponCount++] = weaponIdx;
 
                     Debug.Log("Weapon reached destination " + weaponIdx + " gameData.DeadWeaponCount " + gameData.DeadWeaponCount + " gameData.AliveWeaponCount " + gameData.AliveWeaponCount);
@@ -364,7 +364,7 @@ namespace Survivor
             }
         }
 
-        public static void removeIndexFromArray(int[] array, ref int arrayCount, int index)
+        public static void RemoveIndexFromArray(int[] array, ref int arrayCount, int index)
         {
             int count = 0;
             for (int i = 0; i < arrayCount; i++)

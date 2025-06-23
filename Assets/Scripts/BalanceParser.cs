@@ -109,6 +109,10 @@ namespace Survivor
                         WeaponSO weaponSO = (WeaponSO)objects[weaponIdx];
                         bw.Write(weaponSO.ID);
                         bw.Write(weaponSO.AnimatedSprite.name);
+                        string explosionName = (weaponSO.ExplosionSprite == null) ? "" : weaponSO.ExplosionSprite.name;
+                        bw.Write(explosionName);
+                        string trailName = (weaponSO.TrailSprite == null) ? "" : weaponSO.TrailSprite.name;
+                        bw.Write(trailName);
                         bw.Write(weaponSO.FiringRate);
                         bw.Write(weaponSO.Velocity);
                         bw.Write(weaponSO.AngularVelocity);

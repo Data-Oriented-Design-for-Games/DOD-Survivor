@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ee9527f304d3f41429c6d1941885041e
+guid: 42c62cfe9c7f047c4be7d935fc2b0e28
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -45,10 +45,10 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 2
   spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 32
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -123,13 +123,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Explosion 32x32_0
+      name: Fireball_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 12
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +137,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8ad800bce17344fc1a4ce0a099e8dc46
-      internalID: 1444038954
+      spriteID: c4a9879f22a2e426ea92155efd6f1771
+      internalID: -467036041
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Explosion 32x32_1
+      name: Fireball_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 12
         y: 0
-        width: 32
-        height: 32
+        width: 12
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -158,20 +158,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c0aa92288528947fb8108774ec8336a2
-      internalID: -1236993987
+      spriteID: f724a8cdfdb864224b104d73c92a54b2
+      internalID: 1582085236
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Explosion 32x32_2
+      name: Fireball_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 24
         y: 0
-        width: 32
-        height: 32
+        width: 12
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -179,20 +179,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e9c95c4cd270a4af2a73844c497c9afc
-      internalID: 1508403389
+      spriteID: 9820dc81fc02c4d90a168a13d366dba1
+      internalID: 2098542231
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Explosion 32x32_3
+      name: Fireball_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 36
         y: 0
-        width: 32
-        height: 32
+        width: 12
+        height: 11
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,8 +200,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: db676ee62771045ea91697e4ca6a6991
-      internalID: 911875037
+      spriteID: 54cf2f9d9eca648d49ae4afb1388bd58
+      internalID: 1900495517
       vertices: []
       indices: 
       edges: []
@@ -217,10 +217,10 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Explosion 32x32_0: 1444038954
-      Explosion 32x32_1: -1236993987
-      Explosion 32x32_2: 1508403389
-      Explosion 32x32_3: 911875037
+      Fireball_0: -467036041
+      Fireball_1: 1582085236
+      Fireball_2: 2098542231
+      Fireball_3: 1900495517
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

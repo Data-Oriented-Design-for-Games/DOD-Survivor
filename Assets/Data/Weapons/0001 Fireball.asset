@@ -10,15 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4578bf4534e5429793aca818bd08d78, type: 3}
-  m_Name: 000 Magic Missile
+  m_Name: 0001 Fireball
   m_EditorClassIdentifier: 
-  ID: 0
-  AnimatedSprite: {fileID: 4290713088227431407, guid: da5da8a9c1c89433481fe3ab2abc0a1a, type: 3}
+  ID: 1
+  AnimatedSprite: {fileID: 4290713088227431407, guid: 99f3a45551a2444cfa0497ee01ac2b7b, type: 3}
+  ExplosionSprite: {fileID: 2847892865747687350, guid: 2f35674beec784d07a58928561c29776, type: 3}
+  TrailSprite: {fileID: 0}
   FiringRate: 0.25
   Velocity: 5
   AngularVelocity: 360
   TriggerRadius: 0.1
   RemoveOnHit: 1
-  ExplosionRadius: 1
+  ExplosionRadius: 0.8
   Damage: 1
   WeaponTarget: 0

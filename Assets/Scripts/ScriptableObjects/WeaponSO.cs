@@ -9,6 +9,8 @@ namespace Survivor
     {
         [HideInInspector] public int ID;
         public AnimatedSprite AnimatedSprite;
+        public AnimatedSprite ExplosionSprite;
+        public AnimatedSprite TrailSprite;
         public float FiringRate;
         public float Velocity;
         public float AngularVelocity;
