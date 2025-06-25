@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Survivor
 {
-    public enum AMMO_TARGET { DIRECTION, HOMING, POSITION, ORBIT };
+    public enum AMMO_TARGET { ENEMY, DIRECTION, ORBIT };
 
     [CreateAssetMenu(fileName = "WeaponSO", menuName = "DOD/WeaponSO", order = 1)]
     public class WeaponSO : ScriptableObject

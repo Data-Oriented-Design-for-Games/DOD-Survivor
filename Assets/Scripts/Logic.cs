@@ -73,9 +73,9 @@ namespace Survivor
                 gameData.GroupTime[i] = 0.0f;
             }
 
-            // TEST
-            gameData.PlayerWeaponType[0] = 0;
-            gameData.PlayerWeaponType[1] = 1;
+            // TEST - no way to assign them in game yet
+            gameData.PlayerWeaponType[0] = 1;
+            // gameData.PlayerWeaponType[1] = 1;
         }
 
         static int spawnEnemy(GameData gameData, Balance balance, int enemyType)
@@ -137,9 +137,8 @@ namespace Survivor
                             gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
                             gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.DontRemoveOnHit[playerWeaponType];
                             gameData.AmmoAngle[ammoIndex] = Vector2.SignedAngle(Vector2.up, gameData.LastPlayerDirection);
+                            Debug.Log("Fired new weapon. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex]);
                         }
-
-                        Debug.Log("Weapon added " + ammoIndex + " gameData.DeadWeaponCount " + gameData.DeadAmmoCount + " gameData.AliveWeaponCount " + gameData.AliveAmmoCount);
                     }
                 }
             }
@@ -147,7 +146,7 @@ namespace Survivor
 
         public static void TestFireWeapon(GameData gameData, Balance balance, float dt, Span<int> firedWeaponIdxs, ref int fireWeaponCount)
         {
-            int playerWeaponIndex = 0; // TODO
+            int playerWeaponIndex = 0; // Test fire the first weapon
             gameData.PlayerWeaponFiringRateTimer[playerWeaponIndex] = 0;
 
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref fireWeaponCount);
@@ -158,7 +157,6 @@ namespace Survivor
             // change to insertion sort, and return closest untargeted value
             int closestEnemyIdx = -1;
             float closestDistanceSqr = float.MaxValue;
-            Debug.Log("gameData.AliveEnemyCount " + gameData.AliveEnemyCount);
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIndex = gameData.AliveEnemyIdxs[i];
@@ -174,11 +172,11 @@ namespace Survivor
                     {
                         closestEnemyIdx = enemyIndex;
                         closestDistanceSqr = distanceSqr;
-                        Debug.Log(i + " closestEnemyIdx " + closestEnemyIdx + " closestDistanceSqr " + closestDistanceSqr);
                     }
                 }
             }
 
+            Debug.Log(closestEnemyIdx + " closestEnemyIdx ");
             return closestEnemyIdx;
         }
 
@@ -225,15 +223,15 @@ namespace Survivor
             deadWeaponCount = 0;
 
             // Weapon
-            tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
+            //tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
-            moveWeapons(gameData, balance, dt);
+            moveAmmo(gameData, balance, dt);
 
-            checkWeaponOutOfBounds(gameData, balance, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoOutOfBounds(gameData, balance, deadWeaponIdxs, ref deadWeaponCount);
 
-            checkWeaponEnemyCollision(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoEnemyCollision(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
 
-            checkWeaponReachedDestination(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoReachedDestination(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
 
             // enemies
             trySpawnEnemy(gameData, balance, dt, spawnedEnemyIdxs, ref spawnedEnemyCount);
@@ -274,7 +272,6 @@ namespace Survivor
             }
         }
 
-        // TODO
         static bool tryRespawnEnemy(GameData gameData, Balance balance, int enemyIndex)
         {
             // check if enemy is still in wave
@@ -377,7 +374,7 @@ namespace Survivor
             }
         }
 
-        static void moveWeapons(GameData gameData, Balance balance, float dt)
+        static void moveAmmo(GameData gameData, Balance balance, float dt)
         {
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
@@ -398,12 +395,15 @@ namespace Survivor
                 float angleDelta = balance.WeaponBalance.AngularVelocity[gameData.AmmoType[ammoIndex]] * dt;
 
                 // sharp turns in case destination is at a sharp angle
-                if (Mathf.Abs(angleOffset) >= 45.0f)
-                    angleDelta *= Mathf.Abs(angleOffset) / 45.0f;
+                // if (Mathf.Abs(angleOffset) >= 45.0f)
+                //     angleDelta *= Mathf.Abs(angleOffset) / 45.0f;
 
-                // Debug.Log("ammoIndex " + ammoIndex + " targetAngle " + targetAngle + " angleOffset " + angleOffset + " angleDelta " + angleDelta);
+                Debug.Log(ammoIndex + "angleOffset " + angleOffset + " angleDelta " + angleDelta);
+
                 if (angleDelta > Mathf.Abs(angleOffset))
                 {
+                    Debug.Log("angle reached angleDelta " + angleDelta + " angleOffset " + angleOffset + " targetAngle " + targetAngle + " gameData.AmmoAngle[" + ammoIndex + "] " + gameData.AmmoAngle[ammoIndex]);
+
                     gameData.AmmoAngle[ammoIndex] = targetAngle;
                     gameData.AmmoDirection[ammoIndex] = (gameData.AmmoTargetPos[ammoIndex] - gameData.AmmoPosition[ammoIndex]).normalized;
                 }
@@ -416,12 +416,13 @@ namespace Survivor
 
                     gameData.AmmoDirection[ammoIndex] = RotateVector(Vector2.up, gameData.AmmoAngle[ammoIndex]).normalized;
                 }
+                Debug.Log("Move. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex] + " gameData.AmmoAngle["+ammoIndex+"] " + gameData.AmmoAngle[ammoIndex] + " angleDelta " + angleDelta);
 
                 gameData.AmmoPosition[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.Velocity[gameData.AmmoType[ammoIndex]] * dt;
             }
         }
 
-        static void checkWeaponEnemyCollision(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoEnemyCollision(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
         {
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
@@ -449,7 +450,6 @@ namespace Survivor
                             gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
                         }
 
-                        Debug.Log("Weapon removed " + ammoIndex + " gameData.DeadWeaponCount " + gameData.DeadAmmoCount + " gameData.AliveWeaponCount " + gameData.AliveAmmoCount);
                         break;
                     }
                 }
@@ -479,11 +479,12 @@ namespace Survivor
                 {
                     gameData.AmmoTargetIdx[ammoIndex] = -1;
                     gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
+                    Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex]);
                 }
             }
         }
 
-        static void checkWeaponOutOfBounds(GameData gameData, Balance balance, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoOutOfBounds(GameData gameData, Balance balance, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
         {
             float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
@@ -494,13 +495,11 @@ namespace Survivor
                     deadWeaponIdxs[deadWeaponCount++] = ammoIndex;
                     RemoveIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIndex);
                     gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
-
-                    Debug.Log("Weapon out of bounds " + ammoIndex + " gameData.DeadWeaponCount " + gameData.DeadAmmoCount + " gameData.AliveWeaponCount " + gameData.AliveAmmoCount);
                 }
             }
         }
 
-        static void checkWeaponReachedDestination(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoReachedDestination(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
         {
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
@@ -514,8 +513,6 @@ namespace Survivor
                     deadWeaponIdxs[deadWeaponCount++] = ammoIndex;
                     RemoveIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIndex);
                     gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
-
-                    Debug.Log("Weapon reached destination " + ammoIndex + " gameData.DeadWeaponCount " + gameData.DeadAmmoCount + " gameData.AliveWeaponCount " + gameData.AliveAmmoCount);
                 }
             }
         }
