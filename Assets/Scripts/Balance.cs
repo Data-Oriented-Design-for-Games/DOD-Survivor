@@ -7,10 +7,22 @@ using System.Threading;
 
 namespace Survivor
 {
+    public class LevelBalance
+    {
+        public int TotalWaves;
+        public int[] EnemyType;
+        public int[] NumEnemies;
+        public float[] StartTime;
+        public float[] EndTime;
+        public float[] SpawnDelay;
+        public float[] GroupDelay;
+    }
+
     public class EnemyBalance
     {
-        public int[] ID;
+        public int[] EnemyType;
         public string[] SpriteName;
+        public int[] SpriteType;
         public float[] Velocity;
         public float[] Radius;
         public float[] HP;
@@ -18,9 +30,10 @@ namespace Survivor
 
     public class WeaponBalance
     {
-        public int[] ID;
+        public int[] WeaponType;
         public string[] SpriteName;
         public string[] ExplosionName;
+        public int[] SpriteType;
         public string[] TrailName;
         public float[] FiringRate;
         public float[] Velocity;
@@ -30,6 +43,9 @@ namespace Survivor
         public float[] ExplosionRadius;
         public int[] Damage;
         public float[] DontRemoveOnHit;
+
+        Dictionary<string, int> SpriteNameToIndex;
+        string[] SpriteIndexToName;
     }
 
     public struct PlayerBalanceData
@@ -54,11 +70,13 @@ namespace Survivor
 
         [Header("Player")]
         public float MinCollisionDistance;
+        public int MaxPlayerWeapons;
 
         [Header("Weapons")]
         public int MaxWeapons;
         public int MaxParticles;
 
+        public LevelBalance[] LevelBalance;
         public PlayerBalance PlayerBalance = new PlayerBalance();
         public WeaponBalance WeaponBalance = new WeaponBalance();
         public EnemyBalance EnemyBalance = new EnemyBalance();
@@ -80,9 +98,34 @@ namespace Survivor
                 SpawnRadius = br.ReadSingle();
 
                 MinCollisionDistance = br.ReadSingle();
+                MaxPlayerWeapons = br.ReadInt32();
 
                 MaxWeapons = br.ReadInt32();
                 MaxParticles = br.ReadInt32();
+
+                int numLevels = br.ReadInt32();
+                LevelBalance = new LevelBalance[numLevels];
+                for (int levelIdx = 0; levelIdx < numLevels; levelIdx++)
+                {
+                    LevelBalance[levelIdx] = new LevelBalance();
+                    int numWaves = br.ReadInt32();
+                    LevelBalance[levelIdx].TotalWaves = numWaves;
+                    LevelBalance[levelIdx].EnemyType = new int[numWaves];
+                    LevelBalance[levelIdx].NumEnemies = new int[numWaves];
+                    LevelBalance[levelIdx].StartTime = new float[numWaves];
+                    LevelBalance[levelIdx].EndTime = new float[numWaves];
+                    LevelBalance[levelIdx].SpawnDelay = new float[numWaves];
+                    LevelBalance[levelIdx].GroupDelay = new float[numWaves];
+                    for (int enemyIdx = 0; enemyIdx < numWaves; enemyIdx++)
+                    {
+                        LevelBalance[levelIdx].EnemyType[enemyIdx] = br.ReadInt32();
+                        LevelBalance[levelIdx].NumEnemies[enemyIdx] = br.ReadInt32();
+                        LevelBalance[levelIdx].StartTime[enemyIdx] = br.ReadSingle();
+                        LevelBalance[levelIdx].EndTime[enemyIdx] = br.ReadSingle();
+                        LevelBalance[levelIdx].SpawnDelay[enemyIdx] = br.ReadSingle();
+                        LevelBalance[levelIdx].GroupDelay[enemyIdx] = br.ReadSingle();
+                    }
+                }
 
                 int numPlayers = br.ReadInt32();
                 PlayerBalance.PlayerBalanceData = new PlayerBalanceData[numPlayers];
@@ -95,8 +138,9 @@ namespace Survivor
                 }
 
                 int numWeapons = br.ReadInt32();
-                WeaponBalance.ID = new int[numWeapons];
+                WeaponBalance.WeaponType = new int[numWeapons];
                 WeaponBalance.SpriteName = new string[numWeapons];
+                WeaponBalance.SpriteType = new int[numWeapons];
                 WeaponBalance.ExplosionName = new string[numWeapons];
                 WeaponBalance.TrailName = new string[numWeapons];
                 WeaponBalance.FiringRate = new float[numWeapons];
@@ -109,8 +153,9 @@ namespace Survivor
                 WeaponBalance.DontRemoveOnHit = new float[numWeapons];
                 for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
                 {
-                    WeaponBalance.ID[weaponIdx] = br.ReadInt32();
+                    WeaponBalance.WeaponType[weaponIdx] = br.ReadInt32();
                     WeaponBalance.SpriteName[weaponIdx] = br.ReadString();
+                    WeaponBalance.SpriteType[weaponIdx] = br.ReadInt32();
                     WeaponBalance.ExplosionName[weaponIdx] = br.ReadString();
                     WeaponBalance.TrailName[weaponIdx] = br.ReadString();
                     WeaponBalance.FiringRate[weaponIdx] = br.ReadSingle();
@@ -124,15 +169,17 @@ namespace Survivor
                 }
 
                 int numEnemies = br.ReadInt32();
-                EnemyBalance.ID = new int[numEnemies];
+                EnemyBalance.EnemyType = new int[numEnemies];
                 EnemyBalance.SpriteName = new string[numEnemies];
+                EnemyBalance.SpriteType = new int[numEnemies];
                 EnemyBalance.Velocity = new float[numEnemies];
                 EnemyBalance.Radius = new float[numEnemies];
                 EnemyBalance.HP = new float[numEnemies];
                 for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
                 {
-                    EnemyBalance.ID[enemyIdx] = br.ReadInt32();
+                    EnemyBalance.EnemyType[enemyIdx] = br.ReadInt32();
                     EnemyBalance.SpriteName[enemyIdx] = br.ReadString();
+                    EnemyBalance.SpriteType[enemyIdx] = br.ReadInt32();
                     EnemyBalance.Velocity[enemyIdx] = br.ReadSingle();
                     EnemyBalance.Radius[enemyIdx] = br.ReadSingle();
                     EnemyBalance.HP[enemyIdx] = br.ReadSingle();

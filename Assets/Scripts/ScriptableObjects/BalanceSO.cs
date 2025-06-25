@@ -11,6 +11,7 @@ namespace Survivor
 
         [Header("Player")]
         public float MinCollisionDistance;
+        public int MaxPlayerWeapons;
 
         [Header("Weapons")]
         public int MaxWeapons;

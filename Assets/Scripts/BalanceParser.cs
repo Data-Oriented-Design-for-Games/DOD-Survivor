@@ -79,11 +79,33 @@ namespace Survivor
                     bw.Write(balanceSO.SpawnRadius);
 
                     bw.Write(balanceSO.MinCollisionDistance);
+                    bw.Write(balanceSO.MaxPlayerWeapons);
 
                     bw.Write(balanceSO.MaxWeapons);
                     bw.Write(balanceSO.MaxParticles);
 
                     List<Object> objects = new List<Object>();
+
+                    objects.Clear();
+                    AddObjectsFromDirectory("Assets/Data/Levels", objects, typeof(LevelSO));
+                    int numLevels = objects.Count;
+                    Debug.Log("numLevels " + numLevels);
+                    bw.Write(numLevels);
+                    for (int levelIdx = 0; levelIdx < numLevels; levelIdx++)
+                    {
+                        LevelSO levelSO = (LevelSO)objects[levelIdx];
+                        int numWaves = levelSO.WaveInfo.Length;
+                        bw.Write(numWaves);
+                        for (int waveIdx = 0; waveIdx < numWaves; waveIdx++)
+                        {
+                            bw.Write(levelSO.WaveInfo[waveIdx].EnemySO.ID);
+                            bw.Write(levelSO.WaveInfo[waveIdx].NumEnemies);
+                            bw.Write(levelSO.WaveInfo[waveIdx].StartTime);
+                            bw.Write(levelSO.WaveInfo[waveIdx].EndTime);
+                            bw.Write(levelSO.WaveInfo[waveIdx].SpawnDelay);
+                            bw.Write(levelSO.WaveInfo[waveIdx].GroupDelay);
+                        }
+                    }
 
                     objects.Clear();
                     AddObjectsFromDirectory("Assets/Data/Players", objects, typeof(PlayerSO));
@@ -99,16 +121,26 @@ namespace Survivor
                         bw.Write(playerSO.Weapon.ID);
                     }
 
+                    Dictionary<string, int> spriteNameToType = new Dictionary<string, int>();
+                    int spriteNameCounter = 0;
+
                     objects.Clear();
                     AddObjectsFromDirectory("Assets/Data/Weapons", objects, typeof(WeaponSO));
                     int numWeapons = objects.Count;
                     Debug.Log("numWeapons " + numWeapons);
                     bw.Write(numWeapons);
+                    spriteNameToType.Clear();
+                    spriteNameCounter = 0;
                     for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
                     {
                         WeaponSO weaponSO = (WeaponSO)objects[weaponIdx];
                         bw.Write(weaponSO.ID);
+
                         bw.Write(weaponSO.AnimatedSprite.name);
+                        if (!spriteNameToType.ContainsKey(weaponSO.AnimatedSprite.name))
+                            spriteNameToType[weaponSO.AnimatedSprite.name] = spriteNameCounter++;
+                        bw.Write(spriteNameToType[weaponSO.AnimatedSprite.name]);
+
                         string explosionName = (weaponSO.ExplosionSprite == null) ? "" : weaponSO.ExplosionSprite.name;
                         bw.Write(explosionName);
                         string trailName = (weaponSO.TrailSprite == null) ? "" : weaponSO.TrailSprite.name;
@@ -129,11 +161,18 @@ namespace Survivor
                     int numEnemies = objects.Count;
                     Debug.Log("numEnemies " + numEnemies);
                     bw.Write(numEnemies);
+                    spriteNameToType.Clear();
+                    spriteNameCounter = 0;
                     for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
                     {
                         EnemySO enemySO = (EnemySO)objects[enemyIdx];
                         bw.Write(enemySO.ID);
+
                         bw.Write(enemySO.AnimatedSprite.name);
+                        if(!spriteNameToType.ContainsKey(enemySO.AnimatedSprite.name))
+                            spriteNameToType[enemySO.AnimatedSprite.name] = spriteNameCounter++;
+                            bw.Write(spriteNameToType[enemySO.AnimatedSprite.name]);
+
                         bw.Write(enemySO.Velocity);
                         bw.Write(enemySO.Radius);
                         bw.Write(enemySO.HP);

@@ -24,6 +24,8 @@ namespace Survivor
             poolData.Pool = new AnimatedSprite[maxItems];
             poolData.Used = new bool[maxItems];
             poolData.Type = new int[maxItems];
+            for (int i = 0; i < maxItems; i++)
+                poolData.Type[i] = -1;
             poolData.Count = 0;
 
             poolData.m_spriteAnimationData = new SpriteAnimationData[maxItems];
@@ -38,6 +40,24 @@ namespace Survivor
             poolData.Pool[index].transform.localPosition = position;
             poolData.Pool[index].gameObject.SetActive(true);
 
+        }
+
+        public static void Clear(PoolData poolData)
+        {
+            for (int i = 0; i < poolData.Count; i++)
+            {
+                poolData.Used[i] = false;
+                GameObject.Destroy(poolData.Pool[i]);
+                poolData.Type[i] = -1;
+            }
+            poolData.Count = 0;
+            poolData.LiveCount = 0;
+        }
+
+        public static void HidePoolItem(PoolData poolData, int poolIndex)
+        {
+            poolData.Used[poolIndex] = false;
+            poolData.Pool[poolIndex].gameObject.SetActive(false);
         }
 
         public static int TryGetUnusedPoolItem(PoolData poolData, Balance balance, int type)
@@ -69,28 +89,11 @@ namespace Survivor
 
         public static void Tick(PoolData poolData, float dt)
         {
-            int count = 0;
-            for (int i = 0; i < poolData.LiveCount; i++)
-            {
-                int index = poolData.LiveIdxs[i];
-                CommonVisual.AnimateSprite(dt, ref poolData.m_spriteAnimationData[index]);
-                if (poolData.m_spriteAnimationData[index].FrameChanged && poolData.m_spriteAnimationData[index].FrameIndex == 0)
-                {
-                    // remove frame
-                    poolData.Pool[index].gameObject.SetActive(false);
-                    poolData.Used[index] = false;
-                }
-                else
-                    poolData.LiveIdxs[count++] = index;
-            }
-            poolData.LiveCount = count;
-
             for (int i = 0; i < poolData.LiveCount; i++)
             {
                 int index = poolData.LiveIdxs[i];
                 CommonVisual.TryChangeSpriteFrame(ref poolData.m_spriteAnimationData[index], poolData.Pool[index]);
             }
         }
-
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Survivor
 {
-    public class ExplosionPool
+    public class ParticlePool
     {
         PoolData m_poolData;
 
@@ -20,7 +20,12 @@ namespace Survivor
             CommonPool.Init(m_poolData, balance.MaxParticles);
         }
 
-        public void ShowExplosion(int weaponType, Vector2 position)
+        public void Clear()
+        {
+            CommonPool.Clear(m_poolData);
+        }
+
+        public void ShowParticle(int weaponType, Vector2 position)
         {
             int index = getFreePoolIndex(weaponType);
 
@@ -46,6 +51,21 @@ namespace Survivor
 
         public void Tick(float dt)
         {
+            int count = 0;
+            for (int i = 0; i < m_poolData.LiveCount; i++)
+            {
+                int index = m_poolData.LiveIdxs[i];
+                CommonVisual.AnimateSprite(dt, ref m_poolData.m_spriteAnimationData[index]);
+                if (m_poolData.m_spriteAnimationData[index].FrameChanged && m_poolData.m_spriteAnimationData[index].FrameIndex == 0)
+                {
+                    m_poolData.Pool[index].gameObject.SetActive(false);
+                    m_poolData.Used[index] = false;
+                }
+                else
+                    m_poolData.LiveIdxs[count++] = index;
+            }
+            m_poolData.LiveCount = count;
+
             CommonPool.Tick(m_poolData, dt);
         }
     }

@@ -57,7 +57,7 @@ namespace Survivor
                 for (int i = 0; i < balance.MaxWeapons; i++)
                     bw.Write(gameData.DeadWeaponIdx[i]);
                 for (int i = 0; i < balance.MaxWeapons; i++)
-                bw.Write(gameData.FiringRateTimer[i]);
+                bw.Write(gameData.PlayerWeaponFiringRateTimer[i]);
 
                 bw.Write(gameData.GameTime);
             }
@@ -113,7 +113,7 @@ namespace Survivor
                     for (int i = 0; i < numWeapons; i++)
                         gameData.DeadWeaponIdx[i] = br.ReadInt32();
                     for (int i = 0; i < numWeapons; i++)
-                    gameData.FiringRateTimer[i] = br.ReadInt32();
+                    gameData.PlayerWeaponFiringRateTimer[i] = br.ReadInt32();
 
                     gameData.GameTime = br.ReadSingle();
                 }

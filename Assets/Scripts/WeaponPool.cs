@@ -1,15 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Survivor
 {
-    public class EnemyPool
+    public class WeaponPool
     {
         PoolData m_poolData;
 
-        public int[] PoolIndexToEnemyIndex;
-        public int[] EnemyIndexToPoolIndex;
+        public int[] PoolIndexToWeaponIndex;
+        public int[] WeaponIndexToPoolIndex;
 
         Balance balance;
         Transform spriteParent;
@@ -20,9 +18,9 @@ namespace Survivor
             this.spriteParent = spriteParent;
 
             m_poolData = new PoolData();
-            CommonPool.Init(m_poolData, balance.MaxEnemies * 10);
-            PoolIndexToEnemyIndex = new int[balance.MaxEnemies * 10];
-            EnemyIndexToPoolIndex = new int[balance.MaxEnemies];
+            CommonPool.Init(m_poolData, balance.MaxWeapons * 10);
+            PoolIndexToWeaponIndex = new int[balance.MaxWeapons * 10];
+            WeaponIndexToPoolIndex = new int[balance.MaxWeapons];
         }
 
         public void Clear()
@@ -30,18 +28,18 @@ namespace Survivor
             CommonPool.Clear(m_poolData);
         }
 
-        public void ShowEnemy(int enemyIndex, int spriteType, Vector2 position)
+        public void ShowWeapon(int weaponIndex, int spriteType, Vector2 position)
         {
             int poolIndex = getFreePoolIndex(spriteType);
-            PoolIndexToEnemyIndex[poolIndex] = enemyIndex;
-            EnemyIndexToPoolIndex[enemyIndex] = poolIndex;
+            PoolIndexToWeaponIndex[poolIndex] = weaponIndex;
+            WeaponIndexToPoolIndex[weaponIndex] = poolIndex;
 
             CommonPool.ShowPoolItem(m_poolData, position, poolIndex);
         }
 
-        public void HideEnemy(int enemyIndex)
+        public void HideWeapon(int weaponIndex)
         {
-            int poolIndex = EnemyIndexToPoolIndex[enemyIndex];
+            int poolIndex = WeaponIndexToPoolIndex[weaponIndex];
             CommonPool.HidePoolItem(m_poolData, poolIndex);
         }
 
@@ -53,8 +51,8 @@ namespace Survivor
             {
                 poolIndex = CommonPool.GetNewPoolItemIndex(m_poolData, spriteType);
 
-                string name = balance.EnemyBalance.SpriteName[spriteType];
-                m_poolData.Pool[poolIndex] = AssetManager.Instance.GetEnemy(name, spriteParent);
+                string name = balance.WeaponBalance.SpriteName[spriteType];
+                m_poolData.Pool[poolIndex] = AssetManager.Instance.GetWeapon(name, spriteParent);
             }
 
             CommonVisual.InitSpriteFrameData(ref m_poolData.m_spriteAnimationData[poolIndex], m_poolData.Pool[poolIndex]);
@@ -76,10 +74,9 @@ namespace Survivor
             for (int i = 0; i < m_poolData.LiveCount; i++)
             {
                 int poolIndex = m_poolData.LiveIdxs[i];
-                int enemyIndex = PoolIndexToEnemyIndex[poolIndex];
-                m_poolData.Pool[poolIndex].transform.localPosition = gameData.EnemyPosition[enemyIndex];
-                float scaleX = m_poolData.Pool[poolIndex].transform.localPosition.x < 0.0f ? 1.0f : -1.0f;
-                m_poolData.Pool[poolIndex].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f);
+                int weaponIndex = PoolIndexToWeaponIndex[poolIndex];
+                m_poolData.Pool[poolIndex].transform.localPosition = gameData.WeaponPosition[weaponIndex];
+                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIndex]);
             }
         }
     }

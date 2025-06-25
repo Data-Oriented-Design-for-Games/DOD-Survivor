@@ -26,10 +26,11 @@ namespace Survivor
         public Transform SpriteParent;
 
         AnimatedSprite m_player;
-        AnimatedSprite[] m_enemyPool;
-        AnimatedSprite[] m_weaponPool;
 
-        ExplosionPool m_explosionPool = new ExplosionPool();
+        EnemyPool m_enemyPool = new EnemyPool();
+        WeaponPool m_weaponPool = new WeaponPool();
+        ParticlePool m_trailPool = new ParticlePool();
+        ParticlePool m_explosionPool = new ParticlePool();
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -67,31 +68,16 @@ namespace Survivor
             CommonVisual.InitSpriteFrameData(ref m_visualBoardData.PlayerSpriteAnimData, m_player);
 
             // enemies
-            m_enemyPool = new AnimatedSprite[balance.MaxEnemies];
-            for (int i = 0; i < balance.MaxEnemies; i++)
-            {
-                m_enemyPool[i] = AssetManager.Instance.GetEnemy(balance.EnemyBalance.SpriteName[gameData.EnemyType], SpriteParent);
-                m_enemyPool[i].gameObject.SetActive(false);
-            }
-
+            m_enemyPool.Init(balance, SpriteParent);
             m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.MaxEnemies];
-            for (int i = 0; i < balance.MaxEnemies; i++)
-                CommonVisual.InitSpriteFrameData(ref m_visualBoardData.EnemySpriteAnimData[i], m_enemyPool[i]);
 
-            // ammo
-            m_weaponPool = new AnimatedSprite[balance.MaxWeapons];
-            for (int i = 0; i < balance.MaxWeapons; i++)
-            {
-                m_weaponPool[i] = AssetManager.Instance.GetWeapon(balance.WeaponBalance.SpriteName[gameData.WeaponType], SpriteParent);
-                m_weaponPool[i].gameObject.SetActive(false);
-            }
-
+            // weapons
+            m_weaponPool.Init(balance, SpriteParent);
             m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
-            for (int i = 0; i < balance.MaxWeapons; i++)
-                CommonVisual.InitSpriteFrameData(ref m_visualBoardData.WeaponSpriteAnimData[i], m_weaponPool[i]);
 
             // particles
             m_explosionPool.Init(balance, SpriteParent);
+            m_trailPool.Init(balance, SpriteParent);
 
             // GUI
             m_boardGUI = new BoardGUI();
@@ -114,21 +100,6 @@ namespace Survivor
 
         public void Show()
         {
-            for (int i = 0; i < balance.MaxEnemies; i++)
-            {
-                m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
-                m_enemyPool[i].gameObject.SetActive(true);
-                m_visualBoardData.EnemySpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.EnemySpriteAnimData[i].NumFrames);
-                m_enemyPool[i].SetSpriteFrame(m_visualBoardData.EnemySpriteAnimData[i].FrameIndex);
-            }
-
-            for (int i = 0; i < balance.MaxWeapons; i++)
-            {
-                m_weaponPool[i].gameObject.SetActive(false);
-                m_visualBoardData.WeaponSpriteAnimData[i].FrameIndex = Mathf.FloorToInt(UnityEngine.Random.value * m_visualBoardData.WeaponSpriteAnimData[i].NumFrames);
-                m_weaponPool[i].SetSpriteFrame(m_visualBoardData.WeaponSpriteAnimData[i].FrameIndex);
-            }
-
             m_player.gameObject.SetActive(true);
 
             m_boardGUI.UI.SetActive(true);
@@ -136,8 +107,11 @@ namespace Survivor
 
         public void Hide()
         {
-            for (int i = 0; i < balance.MaxEnemies; i++)
-                m_enemyPool[i].gameObject.SetActive(false);
+            m_enemyPool.Clear();
+            m_weaponPool.Clear();
+            m_explosionPool.Clear();
+            m_trailPool.Clear();
+
             m_player.gameObject.SetActive(false);
 
             hideUI();
@@ -153,22 +127,30 @@ namespace Survivor
             handleInput();
 
             bool isGameOver;
+            Span<int> spawnedEnemyIdxs = stackalloc int[balance.MaxEnemies];
+            int spawnedEnemyCount;
+            Span<int> deadEnemyIdxs = stackalloc int[balance.MaxEnemies];
+            int deadEnemyCount;
             Span<int> firedWeaponIdxs = stackalloc int[balance.MaxWeapons];
             int firedWeaponCount;
-            Span<int> deadWeaponIdxs = stackalloc int[balance.MaxEnemies];
+            Span<int> deadWeaponIdxs = stackalloc int[balance.MaxWeapons];
             int deadWeaponCount;
-            Logic.Tick(metaData, gameData, balance, dt, firedWeaponIdxs, out firedWeaponCount, deadWeaponIdxs, out deadWeaponCount, out isGameOver);
+            Logic.Tick(metaData, gameData, balance, dt, spawnedEnemyIdxs, out spawnedEnemyCount, deadEnemyIdxs, out deadEnemyCount, firedWeaponIdxs, out firedWeaponCount, deadWeaponIdxs, out deadWeaponCount, out isGameOver);
 
-            updateVisuals(firedWeaponIdxs, firedWeaponCount, deadWeaponIdxs, deadWeaponCount, dt);
+            updateVisuals(spawnedEnemyIdxs, spawnedEnemyCount, deadEnemyIdxs, deadEnemyCount, firedWeaponIdxs, firedWeaponCount, deadWeaponIdxs, deadWeaponCount, dt);
 
             if (isGameOver)
                 gameOver();
         }
 
         private void updateVisuals(
+            Span<int> spawnedEnemyIdxs,
+            int spawnedEnemyCount,
+            Span<int> deadEnemyIdxs,
+            int deadEnemyCount,
             Span<int> firedWeaponIdxs,
             int firedWeaponCount,
-            Span<int> deadWeaponIdsx,
+            Span<int> deadWeaponIdxs,
             int deadWeaponCount,
             float dt)
         {
@@ -180,48 +162,40 @@ namespace Survivor
             m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
 
             // enemies
-            for (int i = 0; i < balance.MaxEnemies; i++)
+            for (int i = 0; i < deadEnemyCount; i++)
             {
-                m_enemyPool[i].transform.localPosition = gameData.EnemyPosition[i];
-                float scaleX = m_enemyPool[i].transform.localPosition.x < 0.0f ? 1.0f : -1.0f;
-                m_enemyPool[i].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f);
+                int enemyIndex = deadEnemyIdxs[i];
+                m_enemyPool.HideEnemy(enemyIndex);
             }
-
-            for (int i = 0; i < balance.MaxEnemies; i++)
-                CommonVisual.AnimateSprite(dt, ref m_visualBoardData.EnemySpriteAnimData[i]);
-            for (int i = 0; i < balance.MaxEnemies; i++)
-                CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.EnemySpriteAnimData[i], m_enemyPool[i]);
+            for (int i = 0; i < spawnedEnemyCount; i++)
+            {
+                int enemyIndex = spawnedEnemyIdxs[i];
+                int spriteType = balance.EnemyBalance.SpriteType[gameData.EnemyType[enemyIndex]];
+                m_enemyPool.ShowEnemy(enemyIndex, spriteType, gameData.EnemyPosition[enemyIndex]);
+            }
+            m_enemyPool.Tick(gameData, dt);
 
             // weapons
             for (int i = 0; i < firedWeaponCount; i++)
             {
-                int weaponIdx = firedWeaponIdxs[i];
-                m_weaponPool[weaponIdx].gameObject.SetActive(true);
+                int weaponIndex = firedWeaponIdxs[i];
+                int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
+                m_weaponPool.ShowWeapon(weaponIndex, spriteType, gameData.WeaponPosition[weaponIndex]);
+
             }
             for (int i = 0; i < deadWeaponCount; i++)
             {
-                int weaponIdx = deadWeaponIdsx[i];
-                if (balance.WeaponBalance.ExplosionRadius[gameData.WeaponType] > 0.0f)
+                int weaponIndex = deadWeaponIdxs[i];
+                m_weaponPool.HideWeapon(weaponIndex);
+
+                if (balance.WeaponBalance.ExplosionName[gameData.WeaponType[weaponIndex]].Length > 0)
                 {
-                    m_explosionPool.ShowExplosion(gameData.WeaponType, m_weaponPool[weaponIdx].transform.localPosition);
+                    int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
+                    m_explosionPool.ShowParticle(spriteType, gameData.WeaponPosition[weaponIndex]);
                 }
-                m_weaponPool[weaponIdx].gameObject.SetActive(false);
             }
+            m_weaponPool.Tick(gameData, dt);
             m_explosionPool.Tick(dt);
-
-            for (int i = 0; i < gameData.AliveWeaponCount; i++)
-            {
-                int weaponIdx = gameData.AliveWeaponIdx[i];
-                CommonVisual.AnimateSprite(dt, ref m_visualBoardData.WeaponSpriteAnimData[weaponIdx]);
-            }
-            for (int i = 0; i < gameData.AliveWeaponCount; i++)
-            {
-                int weaponIdx = gameData.AliveWeaponIdx[i];
-                m_weaponPool[weaponIdx].transform.localPosition = gameData.WeaponPosition[weaponIdx];
-                m_weaponPool[weaponIdx].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIdx]);
-
-                CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.WeaponSpriteAnimData[weaponIdx], m_weaponPool[weaponIdx]);
-            }
 
             // ui
             for (int i = 0; i < balance.MaxEnemies; i++)
@@ -278,9 +252,9 @@ mousePosition = Input.GetTouch(0).position;
                 Logic.TestFireWeapon(gameData, balance, (1.0f / 60.0f), firedWeaponIdxs, ref firedWeaponCount);
                 for (int i = 0; i < firedWeaponCount; i++)
                 {
-                    int weaponIdx = firedWeaponIdxs[i];
-                    m_weaponPool[weaponIdx].gameObject.SetActive(true);
-                    int enemyIdx = gameData.WeaponTargetIdx[weaponIdx];
+                    int weaponIndex = firedWeaponIdxs[i];
+                    int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
+                    m_weaponPool.ShowWeapon(weaponIndex, spriteType, gameData.WeaponPosition[weaponIndex]);
                 }
             }
         }
