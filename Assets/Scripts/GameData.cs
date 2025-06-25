@@ -21,7 +21,7 @@ namespace Survivor
         public Vector2[] AmmoPosition;
         public Vector2[] AmmoDirection;
         public int[] AmmoType;
-        public float[] AmmoAngle;
+        public float[] AmmoRotationT;
         public int AliveAmmoCount;
         public int DeadAmmoCount;
         public int[] AliveAmmoIdx;

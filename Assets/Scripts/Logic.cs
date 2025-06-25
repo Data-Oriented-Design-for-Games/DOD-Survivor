@@ -19,7 +19,7 @@ namespace Survivor
             gameData.AmmoPosition = new Vector2[balance.MaxAmmo];
             gameData.AmmoDirection = new Vector2[balance.MaxAmmo];
             gameData.AmmoType = new int[balance.MaxAmmo];
-            gameData.AmmoAngle = new float[balance.MaxAmmo];
+            gameData.AmmoRotationT = new float[balance.MaxAmmo];
             gameData.AliveAmmoIdx = new int[balance.MaxAmmo];
             gameData.DeadAmmoIdx = new int[balance.MaxAmmo];
             gameData.AmmoTargetIdx = new int[balance.MaxAmmo];
@@ -74,8 +74,8 @@ namespace Survivor
             }
 
             // TEST - no way to assign them in game yet
-            gameData.PlayerWeaponType[0] = 1;
-            // gameData.PlayerWeaponType[1] = 1;
+            gameData.PlayerWeaponType[0] = 0;
+            gameData.PlayerWeaponType[1] = 1;
         }
 
         static int spawnEnemy(GameData gameData, Balance balance, int enemyType)
@@ -133,11 +133,12 @@ namespace Survivor
                         int enemyIdx = GetClosestEnemyToPlayerIdxNotUsed(gameData);
                         if (enemyIdx > -1)
                         {
-                            gameData.AmmoDirection[ammoIndex] = gameData.LastPlayerDirection;
+                            gameData.AmmoDirection[ammoIndex] = gameData.LastPlayerDirection.sqrMagnitude > 0.0f ? gameData.LastPlayerDirection : Vector2.up;
                             gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
                             gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.DontRemoveOnHit[playerWeaponType];
-                            gameData.AmmoAngle[ammoIndex] = Vector2.SignedAngle(Vector2.up, gameData.LastPlayerDirection);
-                            Debug.Log("Fired new weapon. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex]);
+                            // gameData.AmmoAngle[ammoIndex] = Vector2.SignedAngle(Vector2.up, gameData.LastPlayerDirection);
+                            gameData.AmmoRotationT[ammoIndex] = 0.0f;
+                            Debug.Log("Fired new weapon. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
                         }
                     }
                 }
@@ -223,7 +224,7 @@ namespace Survivor
             deadWeaponCount = 0;
 
             // Weapon
-            //tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
+            tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
             moveAmmo(gameData, balance, dt);
 
@@ -384,39 +385,11 @@ namespace Survivor
                 if (enemyIndex > -1)
                     gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIndex];
 
-                float targetAngle = Vector2.SignedAngle(Vector2.up, gameData.AmmoTargetPos[ammoIndex] - gameData.AmmoPosition[ammoIndex]);
-                float angleOffset = targetAngle - gameData.AmmoAngle[ammoIndex];
+                gameData.AmmoRotationT[ammoIndex] += balance.WeaponBalance.AngularVelocity[gameData.AmmoType[ammoIndex]] * dt;
+                if (gameData.AmmoRotationT[ammoIndex] > 1.0f)
+                    gameData.AmmoRotationT[ammoIndex] = 1.0f;
 
-                if (angleOffset < -180.0f)
-                    angleOffset += 360.0f;
-                else if (angleOffset > 180.0f)
-                    angleOffset -= 360.0f;
-
-                float angleDelta = balance.WeaponBalance.AngularVelocity[gameData.AmmoType[ammoIndex]] * dt;
-
-                // sharp turns in case destination is at a sharp angle
-                // if (Mathf.Abs(angleOffset) >= 45.0f)
-                //     angleDelta *= Mathf.Abs(angleOffset) / 45.0f;
-
-                Debug.Log(ammoIndex + "angleOffset " + angleOffset + " angleDelta " + angleDelta);
-
-                if (angleDelta > Mathf.Abs(angleOffset))
-                {
-                    Debug.Log("angle reached angleDelta " + angleDelta + " angleOffset " + angleOffset + " targetAngle " + targetAngle + " gameData.AmmoAngle[" + ammoIndex + "] " + gameData.AmmoAngle[ammoIndex]);
-
-                    gameData.AmmoAngle[ammoIndex] = targetAngle;
-                    gameData.AmmoDirection[ammoIndex] = (gameData.AmmoTargetPos[ammoIndex] - gameData.AmmoPosition[ammoIndex]).normalized;
-                }
-                else
-                {
-                    if (angleOffset < 0.0f)
-                        gameData.AmmoAngle[ammoIndex] -= angleDelta;
-                    else if (angleOffset > 0.0f)
-                        gameData.AmmoAngle[ammoIndex] += angleDelta;
-
-                    gameData.AmmoDirection[ammoIndex] = RotateVector(Vector2.up, gameData.AmmoAngle[ammoIndex]).normalized;
-                }
-                Debug.Log("Move. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex] + " gameData.AmmoAngle["+ammoIndex+"] " + gameData.AmmoAngle[ammoIndex] + " angleDelta " + angleDelta);
+                gameData.AmmoDirection[ammoIndex] = Vector2.Lerp(gameData.AmmoDirection[ammoIndex], gameData.AmmoTargetPos[ammoIndex] - gameData.AmmoPosition[ammoIndex], gameData.AmmoRotationT[ammoIndex]).normalized;
 
                 gameData.AmmoPosition[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.Velocity[gameData.AmmoType[ammoIndex]] * dt;
             }
@@ -479,7 +452,7 @@ namespace Survivor
                 {
                     gameData.AmmoTargetIdx[ammoIndex] = -1;
                     gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
-                    Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos["+ammoIndex+"] " + gameData.AmmoTargetPos[ammoIndex]);
+                    Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
                 }
             }
         }
@@ -529,13 +502,13 @@ namespace Survivor
 
         public static void MouseMove(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
         {
-            gameData.LastPlayerDirection = gameData.PlayerDirection;
+            gameData.LastPlayerDirection = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : gameData.LastPlayerDirection;
             gameData.PlayerDirection = (mouseCurrentPos - mouseDownPos).normalized;
         }
 
         public static void MouseUp(GameData gameData)
         {
-            gameData.LastPlayerDirection = gameData.PlayerDirection;
+            gameData.LastPlayerDirection = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : gameData.LastPlayerDirection;
             gameData.PlayerDirection = Vector2.zero;
         }
 

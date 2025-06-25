@@ -18,7 +18,7 @@ MonoBehaviour:
   TrailSprite: {fileID: 4290713088227431407, guid: 91b6fa21405874138a2938df4975f289, type: 3}
   FiringRate: 0.25
   Velocity: 5
-  AngularVelocity: 180
+  AngularVelocity: 1
   TriggerRadius: 0.1
   RemoveOnHit: 1
   ExplosionRadius: 0.8

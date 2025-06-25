@@ -131,9 +131,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 4134266934918393608}
   Sprites:
-  - {fileID: 21300000, guid: cfdbc3e2fa44e463891d6b11bd9c7c9f, type: 3}
-  - {fileID: 21300000, guid: ab0d0f2694965498fbff8e5d76fe4a80, type: 3}
-  - {fileID: 21300000, guid: 502f903ad22b5415b8d4109f5c429d7a, type: 3}
-  - {fileID: 21300000, guid: 086bb91d07b3f4d03a3f2346e0573e7c, type: 3}
-  - {fileID: 21300000, guid: 6f0b6bcd7703e42f8afbac4f3c3358c4, type: 3}
+  - {fileID: 112103920, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  - {fileID: 1231456370, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  - {fileID: 1623969629, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  - {fileID: 858069571, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  - {fileID: -1353667717, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
   FrameTime: 0.1

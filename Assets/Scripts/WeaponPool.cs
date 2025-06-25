@@ -76,7 +76,7 @@ namespace Survivor
                 int poolIndex = m_poolData.LiveIdxs[i];
                 int weaponIndex = PoolIndexToWeaponIndex[poolIndex];
                 m_poolData.Pool[poolIndex].transform.localPosition = gameData.AmmoPosition[weaponIndex];
-                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.AmmoAngle[weaponIndex]);
+                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.AmmoRotationT[weaponIndex]);
             }
         }
     }

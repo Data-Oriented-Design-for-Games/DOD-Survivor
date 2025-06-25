@@ -48,7 +48,7 @@ namespace Survivor
                     bw.Write(gameData.AmmoDirection[i].y);
                 }
                 for (int i = 0; i < balance.MaxAmmo; i++)
-                    bw.Write(gameData.AmmoAngle[i]);
+                    bw.Write(gameData.AmmoRotationT[i]);
 
                 bw.Write(gameData.AliveAmmoCount);
                 bw.Write(gameData.DeadAmmoCount);
@@ -104,7 +104,7 @@ namespace Survivor
                         gameData.AmmoDirection[i].y = br.ReadSingle();
                     }
                     for (int i = 0; i < numWeapons; i++)
-                        gameData.AmmoAngle[i] = br.ReadSingle();
+                        gameData.AmmoRotationT[i] = br.ReadSingle();
 
                     gameData.AliveAmmoCount = br.ReadInt32();
                     gameData.DeadAmmoCount = br.ReadInt32();
