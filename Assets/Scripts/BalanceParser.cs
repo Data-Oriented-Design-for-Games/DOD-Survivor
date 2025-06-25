@@ -149,11 +149,14 @@ namespace Survivor
                         bw.Write(weaponSO.Velocity);
                         bw.Write(weaponSO.AngularVelocity);
                         bw.Write(weaponSO.TriggerRadius);
-                        bw.Write((byte)weaponSO.WeaponTarget);
-                        bw.Write(weaponSO.ExplosionRadius);
-                        bw.Write(weaponSO.Damage);
+
                         float dontRemoveOnHit = weaponSO.RemoveOnHit ? 0.0f : 1.0f;
                         bw.Write(dontRemoveOnHit);
+
+                        bw.Write(weaponSO.ExplosionRadius);
+                        bw.Write(weaponSO.NumProjectiles);
+                        bw.Write((byte)weaponSO.WeaponTarget);
+                        bw.Write(weaponSO.Damage);
                     }
 
                     objects.Clear();

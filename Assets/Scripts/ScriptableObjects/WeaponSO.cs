@@ -17,8 +17,11 @@ namespace Survivor
         public float TriggerRadius;
         public bool RemoveOnHit;
         public float ExplosionRadius;
+        public int NumProjectiles;
+        public AMMO_TARGET WeaponTarget;
+
+        // not yet implemented
         public int Damage;
 
-        public AMMO_TARGET WeaponTarget;
     }
 }

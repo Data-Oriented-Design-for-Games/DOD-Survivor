@@ -39,10 +39,11 @@ namespace Survivor
         public float[] Velocity;
         public float[] AngularVelocity;
         public float[] TriggerRadius;
-        public AMMO_TARGET[] AmmoTarget;
-        public float[] ExplosionRadius;
-        public int[] Damage;
         public float[] DontRemoveOnHit;
+        public float[] ExplosionRadius;
+        public int[] NumProjectiles;
+        public int[] Damage;
+        public AMMO_TARGET[] AmmoTarget;
 
         Dictionary<string, int> SpriteNameToIndex;
         string[] SpriteIndexToName;
@@ -147,10 +148,11 @@ namespace Survivor
                 WeaponBalance.Velocity = new float[numWeapons];
                 WeaponBalance.AngularVelocity = new float[numWeapons];
                 WeaponBalance.TriggerRadius = new float[numWeapons];
-                WeaponBalance.AmmoTarget = new AMMO_TARGET[numWeapons];
-                WeaponBalance.ExplosionRadius = new float[numWeapons];
-                WeaponBalance.Damage = new int[numWeapons];
                 WeaponBalance.DontRemoveOnHit = new float[numWeapons];
+                WeaponBalance.ExplosionRadius = new float[numWeapons];
+                WeaponBalance.NumProjectiles = new int[numWeapons];
+                WeaponBalance.AmmoTarget = new AMMO_TARGET[numWeapons];
+                WeaponBalance.Damage = new int[numWeapons];
                 for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
                 {
                     WeaponBalance.WeaponType[weaponIdx] = br.ReadInt32();
@@ -162,10 +164,11 @@ namespace Survivor
                     WeaponBalance.Velocity[weaponIdx] = br.ReadSingle();
                     WeaponBalance.AngularVelocity[weaponIdx] = br.ReadSingle();
                     WeaponBalance.TriggerRadius[weaponIdx] = br.ReadSingle();
-                    WeaponBalance.AmmoTarget[weaponIdx] = (AMMO_TARGET)br.ReadByte();
-                    WeaponBalance.ExplosionRadius[weaponIdx] = br.ReadSingle();
-                    WeaponBalance.Damage[weaponIdx] = br.ReadInt32();
                     WeaponBalance.DontRemoveOnHit[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.ExplosionRadius[weaponIdx] = br.ReadSingle();
+                    WeaponBalance.NumProjectiles[weaponIdx] = br.ReadInt32();
+                    WeaponBalance.AmmoTarget[weaponIdx] = (AMMO_TARGET)br.ReadByte();
+                    WeaponBalance.Damage[weaponIdx] = br.ReadInt32();
                 }
 
                 int numEnemies = br.ReadInt32();

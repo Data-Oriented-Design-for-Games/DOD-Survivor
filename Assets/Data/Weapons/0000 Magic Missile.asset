@@ -22,5 +22,6 @@ MonoBehaviour:
   TriggerRadius: 0.1
   RemoveOnHit: 1
   ExplosionRadius: 0
-  Damage: 1
+  NumProjectiles: 4
   WeaponTarget: 0
+  Damage: 1

@@ -121,24 +121,32 @@ namespace Survivor
                     {
                         // get free Weapon
                         gameData.PlayerWeaponFiringRateTimer[playerWeaponIndex] += balance.WeaponBalance.FiringRate[playerWeaponType];
-                        int ammoIndex = gameData.DeadAmmoIdx[--gameData.DeadAmmoCount];
-                        gameData.AliveAmmoIdx[gameData.AliveAmmoCount++] = ammoIndex;
-                        firedWeaponIdxs[fireWeaponCount++] = ammoIndex;
-                        gameData.AmmoType[ammoIndex] = playerWeaponType;
 
-                        gameData.AmmoPosition[ammoIndex] = Vector2.zero;
-
-                        // get enemy to fire at
-                        // int enemyIdx = GetClosestEnemyToPlayerIdx(gameData);
-                        int enemyIdx = GetClosestEnemyToPlayerIdxNotUsed(gameData);
-                        if (enemyIdx > -1)
+                        for (int projectileIndex = 0; projectileIndex < balance.WeaponBalance.NumProjectiles[playerWeaponType]; projectileIndex++)
                         {
-                            gameData.AmmoDirection[ammoIndex] = gameData.LastPlayerDirection.sqrMagnitude > 0.0f ? gameData.LastPlayerDirection : Vector2.up;
-                            gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
-                            gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.DontRemoveOnHit[playerWeaponType];
-                            // gameData.AmmoAngle[ammoIndex] = Vector2.SignedAngle(Vector2.up, gameData.LastPlayerDirection);
-                            gameData.AmmoRotationT[ammoIndex] = 0.0f;
-                            Debug.Log("Fired new weapon. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
+                            if (gameData.DeadAmmoCount > 0)
+                            {
+                                int ammoIndex = gameData.DeadAmmoIdx[--gameData.DeadAmmoCount];
+                                gameData.AliveAmmoIdx[gameData.AliveAmmoCount++] = ammoIndex;
+                                firedWeaponIdxs[fireWeaponCount++] = ammoIndex;
+                                gameData.AmmoType[ammoIndex] = playerWeaponType;
+
+                                gameData.AmmoPosition[ammoIndex] = Vector2.zero;
+
+                                // get enemy to fire at
+                                // int enemyIdx = GetClosestEnemyToPlayerIdx(gameData);
+                                if (balance.WeaponBalance.AmmoTarget[playerWeaponType] == AMMO_TARGET.ENEMY)
+                                {
+                                    int enemyIdx = GetClosestEnemyToPlayerIdxNotUsed(gameData);
+                                    if (enemyIdx > -1)
+                                    {
+                                        gameData.AmmoDirection[ammoIndex] = gameData.LastPlayerDirection.sqrMagnitude > 0.0f ? gameData.LastPlayerDirection : Vector2.up;
+                                        gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
+                                        gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.DontRemoveOnHit[playerWeaponType];
+                                        gameData.AmmoRotationT[ammoIndex] = 0.0f;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
