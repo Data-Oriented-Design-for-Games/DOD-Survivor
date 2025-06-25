@@ -15,12 +15,12 @@ MonoBehaviour:
   ID: 0
   AnimatedSprite: {fileID: 4290713088227431407, guid: da5da8a9c1c89433481fe3ab2abc0a1a, type: 3}
   ExplosionSprite: {fileID: 0}
-  TrailSprite: {fileID: 0}
+  TrailSprite: {fileID: 4290713088227431407, guid: 522a8cce2c5de469c82c7553de4504e8, type: 3}
   FiringRate: 0.25
   Velocity: 5
-  AngularVelocity: 360
+  AngularVelocity: 36000
   TriggerRadius: 0.1
   RemoveOnHit: 1
-  ExplosionRadius: 1
+  ExplosionRadius: 0
   Damage: 1
   WeaponTarget: 0

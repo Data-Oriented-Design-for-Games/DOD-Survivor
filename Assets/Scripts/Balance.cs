@@ -73,7 +73,7 @@ namespace Survivor
         public int MaxPlayerWeapons;
 
         [Header("Weapons")]
-        public int MaxWeapons;
+        public int MaxAmmo;
         public int MaxParticles;
 
         public LevelBalance[] LevelBalance;
@@ -100,7 +100,7 @@ namespace Survivor
                 MinCollisionDistance = br.ReadSingle();
                 MaxPlayerWeapons = br.ReadInt32();
 
-                MaxWeapons = br.ReadInt32();
+                MaxAmmo = br.ReadInt32();
                 MaxParticles = br.ReadInt32();
 
                 int numLevels = br.ReadInt32();

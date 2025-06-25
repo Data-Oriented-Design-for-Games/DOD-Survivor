@@ -81,7 +81,7 @@ namespace Survivor
                     bw.Write(balanceSO.MinCollisionDistance);
                     bw.Write(balanceSO.MaxPlayerWeapons);
 
-                    bw.Write(balanceSO.MaxWeapons);
+                    bw.Write(balanceSO.MaxAmmo);
                     bw.Write(balanceSO.MaxParticles);
 
                     List<Object> objects = new List<Object>();

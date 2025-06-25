@@ -73,7 +73,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 112103920, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  m_Sprite: {fileID: 451079619, guid: bc88a269e99cf4bb7a6a9a4712804c96, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 5540518503602066869}
   - component: {fileID: 4290713088227431407}
   m_Layer: 0
-  m_Name: 0001 Fireball Trail
+  m_Name: 0000 Magic Missile Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,9 +131,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 4134266934918393608}
   Sprites:
-  - {fileID: 112103920, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
-  - {fileID: 1231456370, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
-  - {fileID: 1623969629, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
+  - {fileID: 451079619, guid: bc88a269e99cf4bb7a6a9a4712804c96, type: 3}
+  - {fileID: 2032055137, guid: bc88a269e99cf4bb7a6a9a4712804c96, type: 3}
+  - {fileID: 1197316492, guid: bc88a269e99cf4bb7a6a9a4712804c96, type: 3}
   - {fileID: 858069571, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
-  - {fileID: -1353667717, guid: 854a818f3415247dc876a1f97aba3fcd, type: 3}
   FrameTime: 0.05

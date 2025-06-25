@@ -18,16 +18,16 @@ namespace Survivor
         public Vector2 PlayerDirection;
         public Vector2 LastPlayerDirection;
 
-        public Vector2[] WeaponPosition;
-        public Vector2[] WeaponDirection;
-        public int[] WeaponType;
-        public float[] WeaponAngle;
-        public int AliveWeaponCount;
-        public int DeadWeaponCount;
-        public int[] AliveWeaponIdx;
-        public int[] DeadWeaponIdx;
-        public int[] WeaponTargetIdx;
-        public Vector2[] WeaponTargetPos;
+        public Vector2[] AmmoPosition;
+        public Vector2[] AmmoDirection;
+        public int[] AmmoType;
+        public float[] AmmoAngle;
+        public int AliveAmmoCount;
+        public int DeadAmmoCount;
+        public int[] AliveAmmoIdx;
+        public int[] DeadAmmoIdx;
+        public int[] AmmoTargetIdx;
+        public Vector2[] AmmoTargetPos;
 
         public int[] PlayerWeaponType;
         public float[] PlayerWeaponFiringRateTimer;

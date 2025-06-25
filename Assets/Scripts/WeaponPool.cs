@@ -18,9 +18,9 @@ namespace Survivor
             this.spriteParent = spriteParent;
 
             m_poolData = new PoolData();
-            CommonPool.Init(m_poolData, balance.MaxWeapons * 10);
-            PoolIndexToWeaponIndex = new int[balance.MaxWeapons * 10];
-            WeaponIndexToPoolIndex = new int[balance.MaxWeapons];
+            CommonPool.Init(m_poolData, balance.MaxAmmo * 10);
+            PoolIndexToWeaponIndex = new int[balance.MaxAmmo * 10];
+            WeaponIndexToPoolIndex = new int[balance.MaxAmmo];
         }
 
         public void Clear()
@@ -75,8 +75,8 @@ namespace Survivor
             {
                 int poolIndex = m_poolData.LiveIdxs[i];
                 int weaponIndex = PoolIndexToWeaponIndex[poolIndex];
-                m_poolData.Pool[poolIndex].transform.localPosition = gameData.WeaponPosition[weaponIndex];
-                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.WeaponAngle[weaponIndex]);
+                m_poolData.Pool[poolIndex].transform.localPosition = gameData.AmmoPosition[weaponIndex];
+                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.AmmoAngle[weaponIndex]);
             }
         }
     }

@@ -14,7 +14,7 @@ namespace Survivor
         public int MaxPlayerWeapons;
 
         [Header("Weapons")]
-        public int MaxWeapons;
+        public int MaxAmmo;
         public int MaxParticles;
     }
 }

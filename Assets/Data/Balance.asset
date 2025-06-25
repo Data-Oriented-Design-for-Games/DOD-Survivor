@@ -16,5 +16,5 @@ MonoBehaviour:
   SpawnRadius: 7
   MinCollisionDistance: 0.1
   MaxPlayerWeapons: 12
-  MaxWeapons: 1000
+  MaxAmmo: 1000
   MaxParticles: 1000

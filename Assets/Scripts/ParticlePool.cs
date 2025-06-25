@@ -25,14 +25,14 @@ namespace Survivor
             CommonPool.Clear(m_poolData);
         }
 
-        public void ShowParticle(int weaponType, Vector2 position)
+        public void ShowParticle(int weaponType, Vector2 position, string name)
         {
-            int index = getFreePoolIndex(weaponType);
+            int index = getFreePoolIndex(weaponType, name);
 
             CommonPool.ShowPoolItem(m_poolData, position, index);
         }
 
-        int getFreePoolIndex(int weaponType)
+        int getFreePoolIndex(int weaponType, string name)
         {
             int index = CommonPool.TryGetUnusedPoolItem(m_poolData, balance, weaponType);
 
@@ -40,7 +40,6 @@ namespace Survivor
             {
                 index = CommonPool.GetNewPoolItemIndex(m_poolData, weaponType);
 
-                string name = balance.WeaponBalance.ExplosionName[weaponType];
                 m_poolData.Pool[index] = AssetManager.Instance.GetParticle(name, spriteParent);
             }
 

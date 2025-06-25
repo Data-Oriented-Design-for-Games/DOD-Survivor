@@ -73,7 +73,7 @@ namespace Survivor
 
             // weapons
             m_weaponPool.Init(balance, SpriteParent);
-            m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxWeapons];
+            m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxAmmo];
 
             // particles
             m_explosionPool.Init(balance, SpriteParent);
@@ -131,13 +131,13 @@ namespace Survivor
             int spawnedEnemyCount;
             Span<int> deadEnemyIdxs = stackalloc int[balance.MaxEnemies];
             int deadEnemyCount;
-            Span<int> firedWeaponIdxs = stackalloc int[balance.MaxWeapons];
-            int firedWeaponCount;
-            Span<int> deadWeaponIdxs = stackalloc int[balance.MaxWeapons];
-            int deadWeaponCount;
-            Logic.Tick(metaData, gameData, balance, dt, spawnedEnemyIdxs, out spawnedEnemyCount, deadEnemyIdxs, out deadEnemyCount, firedWeaponIdxs, out firedWeaponCount, deadWeaponIdxs, out deadWeaponCount, out isGameOver);
+            Span<int> firedAmmoIdxs = stackalloc int[balance.MaxAmmo];
+            int firedAmmoCount;
+            Span<int> deadAmmoIdxs = stackalloc int[balance.MaxAmmo];
+            int deadAmmoCount;
+            Logic.Tick(metaData, gameData, balance, dt, spawnedEnemyIdxs, out spawnedEnemyCount, deadEnemyIdxs, out deadEnemyCount, firedAmmoIdxs, out firedAmmoCount, deadAmmoIdxs, out deadAmmoCount, out isGameOver);
 
-            updateVisuals(spawnedEnemyIdxs, spawnedEnemyCount, deadEnemyIdxs, deadEnemyCount, firedWeaponIdxs, firedWeaponCount, deadWeaponIdxs, deadWeaponCount, dt);
+            updateVisuals(spawnedEnemyIdxs, spawnedEnemyCount, deadEnemyIdxs, deadEnemyCount, firedAmmoIdxs, firedAmmoCount, deadAmmoIdxs, deadAmmoCount, dt);
 
             if (isGameOver)
                 gameOver();
@@ -148,10 +148,10 @@ namespace Survivor
             int spawnedEnemyCount,
             Span<int> deadEnemyIdxs,
             int deadEnemyCount,
-            Span<int> firedWeaponIdxs,
-            int firedWeaponCount,
-            Span<int> deadWeaponIdxs,
-            int deadWeaponCount,
+            Span<int> firedAmmoIdxs,
+            int firedAmmoCount,
+            Span<int> deadAmmoIdxs,
+            int deadAmmoCount,
             float dt)
         {
             // player
@@ -176,26 +176,32 @@ namespace Survivor
             m_enemyPool.Tick(gameData, dt);
 
             // weapons
-            for (int i = 0; i < firedWeaponCount; i++)
+            for (int i = 0; i < firedAmmoCount; i++)
             {
-                int weaponIndex = firedWeaponIdxs[i];
-                int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
-                m_weaponPool.ShowWeapon(weaponIndex, spriteType, gameData.WeaponPosition[weaponIndex]);
+                int ammoIndex = firedAmmoIdxs[i];
+                int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
+                m_weaponPool.ShowWeapon(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
 
             }
-            for (int i = 0; i < deadWeaponCount; i++)
+            for (int i = 0; i < deadAmmoCount; i++)
             {
-                int weaponIndex = deadWeaponIdxs[i];
-                m_weaponPool.HideWeapon(weaponIndex);
+                int ammoIndex = deadAmmoIdxs[i];
+                m_weaponPool.HideWeapon(ammoIndex);
 
-                if (balance.WeaponBalance.ExplosionName[gameData.WeaponType[weaponIndex]].Length > 0)
+                if (balance.WeaponBalance.ExplosionName[gameData.AmmoType[ammoIndex]].Length > 0)
                 {
-                    int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
-                    m_explosionPool.ShowParticle(spriteType, gameData.WeaponPosition[weaponIndex]);
+                    int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
+                    m_explosionPool.ShowParticle(spriteType, gameData.AmmoPosition[ammoIndex], balance.WeaponBalance.ExplosionName[spriteType]);
                 }
+            }
+            for (int i = 0; i < gameData.AliveAmmoCount; i++)
+            {
+                int ammoIndex = gameData.AliveAmmoIdx[i];
+                m_trailPool.ShowParticle(gameData.AmmoType[ammoIndex], gameData.AmmoPosition[ammoIndex], balance.WeaponBalance.TrailName[gameData.AmmoType[ammoIndex]]);
             }
             m_weaponPool.Tick(gameData, dt);
             m_explosionPool.Tick(dt);
+            m_trailPool.Tick(dt);
 
             // ui
             for (int i = 0; i < balance.MaxEnemies; i++)
@@ -246,15 +252,15 @@ mousePosition = Input.GetTouch(0).position;
 
             if (Input.GetKeyUp(KeyCode.Space))
             {
-                Span<int> firedWeaponIdxs = stackalloc int[balance.MaxWeapons];
+                Span<int> firedWeaponIdxs = stackalloc int[balance.MaxAmmo];
                 int firedWeaponCount = 0;
 
                 Logic.TestFireWeapon(gameData, balance, (1.0f / 60.0f), firedWeaponIdxs, ref firedWeaponCount);
                 for (int i = 0; i < firedWeaponCount; i++)
                 {
-                    int weaponIndex = firedWeaponIdxs[i];
-                    int spriteType = balance.WeaponBalance.SpriteType[gameData.WeaponType[weaponIndex]];
-                    m_weaponPool.ShowWeapon(weaponIndex, spriteType, gameData.WeaponPosition[weaponIndex]);
+                    int ammoIndex = firedWeaponIdxs[i];
+                    int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
+                    m_weaponPool.ShowWeapon(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
                 }
             }
         }
