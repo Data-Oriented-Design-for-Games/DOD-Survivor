@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccacb6c2ec8074dbdbc596fa034238c3, type: 3}
   m_Name: Balance
   m_EditorClassIdentifier: 
-  MaxEnemies: 1000
+  MaxEnemies: 2000
   SpawnRadius: 7
   MinCollisionDistance: 0.1
   MaxPlayerWeapons: 12

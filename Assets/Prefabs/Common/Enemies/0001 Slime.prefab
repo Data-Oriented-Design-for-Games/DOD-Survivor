@@ -135,4 +135,4 @@ MonoBehaviour:
   - {fileID: 1617033127, guid: 938c859664d5f42a290072e43a336540, type: 3}
   - {fileID: 444300443, guid: 938c859664d5f42a290072e43a336540, type: 3}
   - {fileID: -1619517968, guid: 938c859664d5f42a290072e43a336540, type: 3}
-  FrameTime: 0.1
+  FrameTime: 0.2

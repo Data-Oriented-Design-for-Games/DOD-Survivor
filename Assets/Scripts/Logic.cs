@@ -73,6 +73,8 @@ namespace Survivor
                 gameData.GroupTime[i] = 0.0f;
             }
 
+            gameData.StatsEnemiesKilled = 0;
+
             // TEST - no way to assign them in game yet
             gameData.PlayerWeaponType[0] = 0;
             gameData.PlayerWeaponType[1] = 1;
@@ -261,20 +263,23 @@ namespace Survivor
         {
             for (int waveIdx = 0; waveIdx < balance.LevelBalance[gameData.Level].TotalWaves; waveIdx++)
             {
-                int enemyType = balance.LevelBalance[gameData.Level].EnemyType[waveIdx];
-                if (gameData.GameTime >= balance.LevelBalance[gameData.Level].StartTime[waveIdx] &&
-                    gameData.GameTime < balance.LevelBalance[gameData.Level].EndTime[waveIdx])
+                if (gameData.DeadEnemyCount > 0)
                 {
-                    if (gameData.WaveEnemyCount[waveIdx] < balance.LevelBalance[gameData.Level].NumEnemies[waveIdx])
+                    int enemyType = balance.LevelBalance[gameData.Level].EnemyType[waveIdx];
+                    if (gameData.GameTime >= balance.LevelBalance[gameData.Level].StartTime[waveIdx] &&
+                        gameData.GameTime < balance.LevelBalance[gameData.Level].EndTime[waveIdx])
                     {
-                        gameData.SpawnTime[waveIdx] += dt;
-                        if (gameData.SpawnTime[waveIdx] >= balance.LevelBalance[gameData.Level].SpawnDelay[waveIdx])
+                        if (gameData.WaveEnemyCount[waveIdx] < balance.LevelBalance[gameData.Level].NumEnemies[waveIdx])
                         {
-                            gameData.SpawnTime[waveIdx] -= balance.LevelBalance[gameData.Level].SpawnDelay[waveIdx];
+                            gameData.SpawnTime[waveIdx] += dt;
+                            if (gameData.SpawnTime[waveIdx] >= balance.LevelBalance[gameData.Level].SpawnDelay[waveIdx])
+                            {
+                                gameData.SpawnTime[waveIdx] -= balance.LevelBalance[gameData.Level].SpawnDelay[waveIdx];
 
-                            // need to spawn this enemy
-                            int enemyIndex = spawnEnemy(gameData, balance, enemyType);
-                            spawnedEnemyIdxs[spawnedEnemyCount++] = enemyIndex;
+                                // need to spawn this enemy
+                                int enemyIndex = spawnEnemy(gameData, balance, enemyType);
+                                spawnedEnemyIdxs[spawnedEnemyCount++] = enemyIndex;
+                            }
                         }
                     }
                 }
@@ -417,6 +422,7 @@ namespace Survivor
                     {
                         // bullet impacted enemy
 
+                        gameData.StatsEnemiesKilled++;
                         removeEnemy(gameData, balance, enemyIndex, deadEnemyIdxs, ref deadEnemyCount);
 
                         int ammoType = gameData.AmmoType[ammoIndex];
@@ -446,6 +452,7 @@ namespace Survivor
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
                 if ((gameData.EnemyPosition[enemyIdx] - explosionPos).sqrMagnitude < squareRadius)
                 {
+                    gameData.StatsEnemiesKilled++;
                     removeEnemy(gameData, balance, enemyIdx, deadEnemyIdxs, ref deadEnemyCount);
                 }
             }

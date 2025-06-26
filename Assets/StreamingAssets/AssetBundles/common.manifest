@@ -1,0 +1,43 @@
+ManifestFileVersion: 0
+CRC: 314890049
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 80b7eeb7cf1d0f176d8b3051cf119dc2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 1befd3063f3f6fa0d080863d1b07d7a1
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 80b7eeb7cf1d0f176d8b3051cf119dc2
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7cfa74e594eac400799de3341dd0416b, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Prefabs/Common/Players/0000 Mage.prefab
+- Assets/Prefabs/Common/Particles/0001 Fireball Trail.prefab
+- Assets/Prefabs/Common/Enemies/0000 Skeleton.prefab
+- Assets/Prefabs/Common/Particles/0001 Fireball Explosion.prefab
+- Assets/Prefabs/Common/Weapons/0001 Fireball.prefab
+- Assets/Prefabs/Common/Enemies/0001 Slime.prefab
+- Assets/Prefabs/Common/Weapons/0000 Magic Missile.prefab
+- Assets/Prefabs/Common/Particles/0000 Magic Missile Trail.prefab
+Dependencies: []

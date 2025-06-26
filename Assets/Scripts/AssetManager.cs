@@ -10,7 +10,7 @@ namespace Survivor
 {
     public class AssetManager : Singleton<AssetManager>
     {
-        public static bool UseAssetBundles = false;
+        public static bool UseAssetBundles = true;
 
         [SerializeField] AnimatedSprite m_playerPrefab;
         [SerializeField] AnimatedSprite m_enemyPrefab;
@@ -45,7 +45,7 @@ namespace Survivor
 
         GameObject loadGameObject(AssetBundle assetBundle, string objName, string localPath)
         {
-            // Debug.Log("loadGameObject objName " + objName + " localPath " + localPath);
+            Debug.Log("loadGameObject objName " + objName + " localPath " + localPath);
 
             GameObject go = null;
 #if UNITY_EDITOR

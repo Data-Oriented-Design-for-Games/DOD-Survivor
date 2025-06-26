@@ -74,9 +74,10 @@ namespace Survivor
             for (int i = 0; i < m_poolData.LiveCount; i++)
             {
                 int poolIndex = m_poolData.LiveIdxs[i];
-                int weaponIndex = PoolIndexToWeaponIndex[poolIndex];
-                m_poolData.Pool[poolIndex].transform.localPosition = gameData.AmmoPosition[weaponIndex];
-                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.AmmoRotationT[weaponIndex]);
+                int ammoIndex = PoolIndexToWeaponIndex[poolIndex];
+                m_poolData.Pool[poolIndex].transform.localPosition = gameData.AmmoPosition[ammoIndex];
+                float angle = Vector2.SignedAngle(Vector2.up, gameData.AmmoDirection[ammoIndex]);
+                m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, angle);
             }
         }
     }

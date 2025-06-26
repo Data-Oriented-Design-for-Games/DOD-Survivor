@@ -17,11 +17,11 @@ MonoBehaviour:
     NumEnemies: 1000
     StartTime: 0
     EndTime: 300
-    SpawnDelay: 0.1
+    SpawnDelay: 0.01
     GroupDelay: 0
   - EnemySO: {fileID: 11400000, guid: 97155c15d06f9483ab64fe7f1715df3d, type: 2}
     NumEnemies: 1000
     StartTime: 0
     EndTime: 300
-    SpawnDelay: 0.1
+    SpawnDelay: 0.01
     GroupDelay: 0

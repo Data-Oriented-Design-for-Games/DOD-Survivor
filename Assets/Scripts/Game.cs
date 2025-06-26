@@ -30,6 +30,8 @@ namespace Survivor
         // Start is called before the first frame update
         void Start()
         {
+            AssetManager.Instance.LoadCommonAssetBundle();
+
             m_mainMenuVisual = AssetManager.Instance.GetMainMenuVisual();
             m_gameOverVisual = AssetManager.Instance.GetGameOverVisual();
             m_pauseMenuVisual = AssetManager.Instance.GetPauseMenuVisual();

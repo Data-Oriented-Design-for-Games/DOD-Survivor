@@ -8,11 +8,13 @@ namespace Survivor
     {
         PoolData m_poolData;
 
+        GameData gameData;
         Balance balance;
         Transform spriteParent;
 
-        public void Init(Balance balance, Transform spriteParent)
+        public void Init(GameData gameData, Balance balance, Transform spriteParent)
         {
+            this.gameData = gameData;
             this.balance = balance;
             this.spriteParent = spriteParent;
 
@@ -65,6 +67,13 @@ namespace Survivor
             }
             m_poolData.LiveCount = count;
 
+            Vector2 playerPosition = gameData.PlayerDirection * balance.PlayerBalance.PlayerBalanceData[gameData.PlayerType].Velocity * dt;
+            for (int i = 0; i < m_poolData.LiveCount; i++)
+            {
+                int index = m_poolData.LiveIdxs[i];
+                Vector2 position = m_poolData.Pool[index].transform.localPosition;
+                m_poolData.Pool[index].transform.localPosition = position -= playerPosition;
+            }
             CommonPool.Tick(m_poolData, dt);
         }
     }

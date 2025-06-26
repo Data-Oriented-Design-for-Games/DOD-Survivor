@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Survivor
@@ -14,6 +15,8 @@ namespace Survivor
         public int[] LiveIdxs;
         public int LiveCount;
 
+        public int MaxItems;
+
         public SpriteAnimationData[] m_spriteAnimationData;
     }
 
@@ -21,6 +24,7 @@ namespace Survivor
     {
         public static void Init(PoolData poolData, int maxItems)
         {
+            poolData.MaxItems = maxItems;
             poolData.Pool = new AnimatedSprite[maxItems];
             poolData.Used = new bool[maxItems];
             poolData.Type = new int[maxItems];
@@ -44,6 +48,12 @@ namespace Survivor
 
         public static void Clear(PoolData poolData)
         {
+            for (int i = 0; i < poolData.LiveCount; i++)
+            {
+                int index = poolData.LiveIdxs[i];
+                poolData.Pool[index].gameObject.SetActive(false);
+            }
+
             for (int i = 0; i < poolData.Count; i++)
             {
                 poolData.Used[i] = false;
@@ -69,16 +79,14 @@ namespace Survivor
                     return i;
                 }
 
-            if (balance.MaxParticles == poolData.Count)
-            {
-                Debug.LogError("Particle pool out of space! Allocated " + balance.MaxParticles);
-            }
-
             return -1;
         }
 
         public static int GetNewPoolItemIndex(PoolData poolData, int type)
         {
+            if (poolData.Count == poolData.MaxItems)
+                Debug.LogError("Pool out of space! Allocated " + poolData.MaxItems + " items!");
+
             int index = poolData.Count;
             // no free existing particle found, allocate a new one
             poolData.Used[index] = true;

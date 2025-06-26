@@ -41,5 +41,8 @@ namespace Survivor
         public int PlayerType;
 
         public float GameTime;
+
+        // stats
+        public int StatsEnemiesKilled;
     }
 }

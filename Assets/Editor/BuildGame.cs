@@ -85,6 +85,9 @@ namespace Survivor
 
         static void setAndroidBuildNumber()
         {
+            if (!File.Exists("Assets/Resources/AndroidBuildNum.txt"))
+                File.WriteAllText("Assets/Resources/AndroidBuildNum.txt", "0");
+
             string buildNumText = File.ReadAllText("Assets/Resources/AndroidBuildNum.txt");
             Debug.LogFormat("Build num " + buildNumText);
             int buildNum;
@@ -124,6 +127,9 @@ namespace Survivor
 
         static void setiOSBuildNumber()
         {
+            if (!File.Exists("Assets/Resources/iOSBuildNum.txt"))
+                File.WriteAllText("Assets/Resources/iOSBuildNum.txt", "0");
+
             string buildNumText = File.ReadAllText("Assets/Resources/iOSBuildNum.txt");
             Debug.LogFormat("Build num " + buildNumText);
             int buildNum;
@@ -159,7 +165,7 @@ namespace Survivor
             Debug.LogFormat("BuildAllAssetBundles elapsed time {0}", Time.realtimeSinceStartup - time);
 
             // Get filename.
-            string[] levels = new string[] { "Assets/Scenes/MainGameScene V.unity" };
+            string[] levels = new string[] { "Assets/Scenes/MainGameScene.unity" };
 
             // Build player.
             BuildPipeline.BuildPlayer(levels, path, buildTarget, options);

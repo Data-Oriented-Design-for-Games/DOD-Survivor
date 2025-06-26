@@ -9,6 +9,7 @@ namespace Survivor
     {
         public GameObject UI;
         public TextMeshProUGUI GameTimeText;
+        public TextMeshProUGUI StatsText;
     }
 
     public struct SpriteAnimationData
@@ -76,8 +77,8 @@ namespace Survivor
             m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxAmmo];
 
             // particles
-            m_explosionPool.Init(balance, SpriteParent);
-            m_trailPool.Init(balance, SpriteParent);
+            m_explosionPool.Init(gameData, balance, SpriteParent);
+            m_trailPool.Init(gameData, balance, SpriteParent);
 
             // GUI
             m_boardGUI = new BoardGUI();
@@ -85,6 +86,7 @@ namespace Survivor
 
             GUIRef guiRef = m_boardGUI.UI.GetComponent<GUIRef>();
             m_boardGUI.GameTimeText = guiRef.GetTextGUI("GameTime");
+            m_boardGUI.StatsText = guiRef.GetTextGUI("Stats");
             guiRef.GetButton("Pause").onClick.AddListener(pauseGame);
 
             m_player.gameObject.SetActive(false);
@@ -206,6 +208,11 @@ namespace Survivor
             // ui
             for (int i = 0; i < balance.MaxEnemies; i++)
                 m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
+
+            string statsText = "Enemies alive " + gameData.AliveEnemyCount.ToString("N0") + "\n";
+            statsText += "Enemies dead " + gameData.StatsEnemiesKilled.ToString("N0");
+            m_boardGUI.StatsText.text = statsText;
+
         }
 
         void handleInput()

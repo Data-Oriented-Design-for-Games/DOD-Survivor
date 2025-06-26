@@ -8,7 +8,7 @@ namespace Survivor
     [InitializeOnLoad]
     public class CreateAssetBundles
     {
-        private const string UseAssetBundlesMenuName = "Cardwheel/Asset Bundles/Use Asset Bundles";
+        private const string UseAssetBundlesMenuName = "DOD/Asset Bundles/Use Asset Bundles";
 
         static CreateAssetBundles()
         {
