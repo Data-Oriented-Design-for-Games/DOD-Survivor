@@ -20,7 +20,6 @@ MonoBehaviour:
   Velocity: 5
   AngularVelocity: 36000
   TriggerRadius: 0.1
-  RemoveOnHit: 1
   ExplosionRadius: 0
   NumProjectiles: 4
   WeaponTarget: 0

@@ -1,8 +1,5 @@
 using UnityEngine;
 using System;
-using System.Security.Cryptography;
-using Unity.Mathematics;
-using Unity.Burst.Intrinsics;
 
 namespace Survivor
 {
@@ -15,6 +12,8 @@ namespace Survivor
             gameData.EnemyType = new int[balance.MaxEnemies];
             gameData.AliveEnemyIdxs = new int[balance.MaxEnemies];
             gameData.DeadEnemyIdxs = new int[balance.MaxEnemies];
+            gameData.DyingEnemyIdxs = new int[balance.MaxEnemies];
+            gameData.DyingEnemyTimer = new float[balance.MaxEnemies];
 
             gameData.AmmoPosition = new Vector2[balance.MaxAmmo];
             gameData.AmmoDirection = new Vector2[balance.MaxAmmo];
@@ -27,6 +26,13 @@ namespace Survivor
             gameData.PlayerWeaponFiringRateTimer = new float[balance.MaxAmmo];
 
             gameData.PlayerWeaponType = new int[balance.MaxPlayerWeapons];
+
+            gameData.XPPosition = new Vector2[balance.MaxXP];
+            gameData.XPValue = new float[balance.MaxXP];
+            gameData.XPUsedIdxs = new int[balance.MaxXP];
+            gameData.XPUnusedIdxs = new int[balance.MaxXP];
+
+            gameData.PrevTirePosition = new Vector2[4];
         }
 
         public static void Init(MetaData metaData)
@@ -36,17 +42,26 @@ namespace Survivor
 
         public static void StartGame(GameData gameData, Balance balance)
         {
-            gameData.InGame = true;
+            gameData.InGame = false;
 
             gameData.GameTime = 0.0f;
+            gameData.XP = 0.0f;
 
-            gameData.PlayerDirection = Vector2.zero;
-            gameData.LastPlayerDirection = Vector2.right;
+            gameData.HeroType = 0;
+            gameData.CarType = 0;
+
+            gameData.InCar = true;
+            gameData.PlayerDirection = gameData.InCar ? Vector2.right : Vector2.zero;
+            gameData.PlayerTargetDirection = gameData.InCar ? Vector2.right : Vector2.zero;
+            gameData.CarSlideDirection = gameData.PlayerDirection;
+            gameData.CarRotationAngle = 0.0f;
+            gameData.CarVelocity = 0.0f;
 
             gameData.AliveEnemyCount = 0;
             gameData.DeadEnemyCount = balance.MaxEnemies;
             for (int i = 0; i < balance.MaxEnemies; i++)
                 gameData.DeadEnemyIdxs[i] = (balance.MaxEnemies - 1) - i;
+            gameData.DyingEnemyCount = 0;
 
             gameData.AliveAmmoCount = 0;
             gameData.DeadAmmoCount = balance.MaxAmmo;
@@ -56,7 +71,6 @@ namespace Survivor
             for (int i = 0; i < balance.MaxAmmo; i++)
                 gameData.AmmoTargetIdx[i] = -1;
 
-            gameData.PlayerType = 0;
 
             for (int i = 0; i < balance.MaxPlayerWeapons; i++)
                 gameData.PlayerWeaponType[i] = -1;
@@ -73,11 +87,16 @@ namespace Survivor
                 gameData.GroupTime[i] = 0.0f;
             }
 
+            gameData.XPUsedCount = 0;
+            gameData.XPUnusedCount = balance.MaxXP;
+            for (int i = 0; i < balance.MaxXP; i++)
+                gameData.XPUnusedIdxs[i] = (balance.MaxXP - 1) - i;
+
             gameData.StatsEnemiesKilled = 0;
 
             // TEST - no way to assign them in game yet
-            gameData.PlayerWeaponType[0] = 0;
-            gameData.PlayerWeaponType[1] = 1;
+            // gameData.PlayerWeaponType[0] = 0;
+            // gameData.PlayerWeaponType[1] = 1;
         }
 
         static int spawnEnemy(GameData gameData, Balance balance, int enemyType)
@@ -139,14 +158,15 @@ namespace Survivor
                                 // int enemyIdx = GetClosestEnemyToPlayerIdx(gameData);
                                 if (balance.WeaponBalance.AmmoTarget[playerWeaponType] == AMMO_TARGET.ENEMY)
                                 {
+                                    gameData.AmmoDirection[ammoIndex] = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : Vector2.up;
+                                    gameData.AmmoRotationT[ammoIndex] = 0.0f;
+
                                     int enemyIdx = GetClosestEnemyToPlayerIdxNotUsed(gameData);
+                                    gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
                                     if (enemyIdx > -1)
-                                    {
-                                        gameData.AmmoDirection[ammoIndex] = gameData.LastPlayerDirection.sqrMagnitude > 0.0f ? gameData.LastPlayerDirection : Vector2.up;
-                                        gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
-                                        gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex] * balance.WeaponBalance.DontRemoveOnHit[playerWeaponType];
-                                        gameData.AmmoRotationT[ammoIndex] = 0.0f;
-                                    }
+                                        gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex];
+                                    else
+                                        gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
                                 }
                             }
                         }
@@ -187,7 +207,7 @@ namespace Survivor
                 }
             }
 
-            Debug.Log(closestEnemyIdx + " closestEnemyIdx ");
+            // Debug.Log(closestEnemyIdx + " closestEnemyIdx ");
             return closestEnemyIdx;
         }
 
@@ -220,43 +240,85 @@ namespace Survivor
             out int spawnedEnemyCount,
             Span<int> deadEnemyIdxs,
             out int deadEnemyCount,
+            Span<int> dyingEnemyIdxs,
+            out int dyingEnemyCount,
             Span<int> firedWeaponIdxs,
             out int firedWeaponCount,
-            Span<int> deadWeaponIdxs,
-            out int deadWeaponCount,
+            Span<int> deadAmmoIdxs,
+            out int deadAmmoCount,
+            Span<int> xpPlacedIdxs,
+            out int xpPlacedCount,
+            Span<int> xpPickedUpIdxs,
+            out int xpPickedUpCount,
+            int xpPickedUpMax,
             out bool gameOver)
         {
             gameData.GameTime += dt;
 
             deadEnemyCount = 0;
+            dyingEnemyCount = 0;
             spawnedEnemyCount = 0;
             firedWeaponCount = 0;
-            deadWeaponCount = 0;
+            deadAmmoCount = 0;
+            xpPlacedCount = 0;
+            xpPickedUpCount = 0;
 
             // Weapon
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
             moveAmmo(gameData, balance, dt);
 
-            checkAmmoOutOfBounds(gameData, balance, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoOutOfBounds(gameData, balance, deadAmmoIdxs, ref deadAmmoCount);
 
-            checkAmmoEnemyCollision(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoEnemyCollision(gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount, deadAmmoIdxs, ref deadAmmoCount);
 
-            checkAmmoReachedDestination(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, deadWeaponIdxs, ref deadWeaponCount);
+            checkAmmoReachedDestination(gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount, deadAmmoIdxs, ref deadAmmoCount);
 
             // enemies
+            timeOutDyingEnemies(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, xpPlacedIdxs, ref xpPlacedCount, dt);
+
             trySpawnEnemy(gameData, balance, dt, spawnedEnemyIdxs, ref spawnedEnemyCount);
 
             moveEnemies(gameData, balance, dt);
 
             checkEnemyOutOfBounds(gameData, balance, deadEnemyIdxs, ref deadEnemyCount);
 
+            checkDyingEnemyOutOfBounds(gameData, balance);
+
             doEnemyToEnemyCollision(gameData, balance);
 
-            // player
-            movePlayer(gameData, balance, dt);
+            doCarEnemyCollision(metaData, gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount);
 
-            gameOver = checkGameOver(metaData, gameData, balance);
+            // player
+            if (gameData.InCar)
+                moveCar(gameData, balance, dt);
+            else
+                movePlayer(gameData, balance, dt);
+            pickupXP(gameData, xpPickedUpIdxs, ref xpPickedUpCount, xpPickedUpMax);
+
+
+            gameOver = false;//checkGameOver(metaData, gameData, balance);
+        }
+
+        private static void pickupXP(GameData gameData, Span<int> xpPickedUpIdxs, ref int xpPickedUpCount, int xpPickedUpMax)
+        {
+            int count = 0;
+            for (int i = 0; i < gameData.XPUsedCount; i++)
+            {
+                int xpIndex = gameData.XPUsedIdxs[i];
+                if (xpPickedUpCount < xpPickedUpMax && gameData.XPPosition[xpIndex].sqrMagnitude < 0.1f)
+                {
+                    gameData.XP += gameData.XPValue[xpIndex];
+                    // pickup XP;
+                    xpPickedUpIdxs[xpPickedUpCount++] = xpIndex;
+                    gameData.XPUnusedIdxs[gameData.XPUnusedCount++] = xpIndex;
+                }
+                else
+                {
+                    gameData.XPUsedIdxs[count++] = gameData.XPUsedIdxs[i];
+                }
+            }
+            gameData.XPUsedCount = count;
         }
 
         static void trySpawnEnemy(GameData gameData, Balance balance, float dt, Span<int> spawnedEnemyIdxs, ref int spawnedEnemyCount)
@@ -279,6 +341,7 @@ namespace Survivor
                                 // need to spawn this enemy
                                 int enemyIndex = spawnEnemy(gameData, balance, enemyType);
                                 spawnedEnemyIdxs[spawnedEnemyCount++] = enemyIndex;
+                                gameData.WaveEnemyCount[waveIdx]++;
                             }
                         }
                     }
@@ -316,13 +379,163 @@ namespace Survivor
             return false;
         }
 
-        static void removeEnemy(GameData gameData, Balance balance, int enemyIdx, Span<int> deadEnemyIdxs, ref int deadEnemyCount)
+        static void markEnemyDead(GameData gameData, Balance balance, int enemyIdx, Span<int> deadEnemyIdxs, ref int deadEnemyCount)
         {
-            RemoveIndexFromArray(gameData.AliveEnemyIdxs, ref gameData.AliveEnemyCount, enemyIdx);
             gameData.DeadEnemyIdxs[gameData.DeadEnemyCount++] = enemyIdx;
 
-            removeEnemyTargetIdxFromWeapons(gameData, balance, enemyIdx);
+            changeEnemyTargetIdxFromWeapons(gameData, balance, enemyIdx);
             deadEnemyIdxs[deadEnemyCount++] = enemyIdx;
+        }
+
+        static void markEnemyDyingCheckForDuplicate(
+            GameData gameData,
+            Balance balance,
+            int enemyIndex,
+            Span<int> dyingEnemyIdxs,
+            ref int dyingEnemyCount)
+        {
+            bool enemyAlreadyDying = false;
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+                if (gameData.DyingEnemyIdxs[i] == enemyIndex)
+                {
+                    enemyAlreadyDying = true;
+                    break;
+                }
+
+            if (!enemyAlreadyDying)
+            {
+                int enemyType = gameData.EnemyType[enemyIndex];
+                gameData.DyingEnemyIdxs[gameData.DyingEnemyCount] = enemyIndex;
+                gameData.DyingEnemyTimer[gameData.DyingEnemyCount] = balance.EnemyBalance.DyingTime[enemyType];
+                gameData.DyingEnemyCount++;
+                dyingEnemyIdxs[dyingEnemyCount++] = enemyIndex;
+                gameData.StatsEnemiesKilled++;
+            }
+
+            changeEnemyTargetIdxFromWeapons(gameData, balance, enemyIndex);
+
+            // Debug.Log("enemyDying " + enemyIndex);
+        }
+
+        private static int dropXP(GameData gameData, Balance balance, int enemyIndex, Span<int> xpPlacedIdxs, ref int xpPlacedCount)
+        {
+            if (gameData.XPUnusedCount > 0)
+            {
+                int xpIndex = gameData.XPUnusedIdxs[--gameData.XPUnusedCount];
+                gameData.XPUsedIdxs[gameData.XPUsedCount++] = xpIndex;
+                gameData.XPPosition[xpIndex] = gameData.EnemyPosition[enemyIndex];
+                gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                xpPlacedIdxs[xpPlacedCount++] = xpIndex;
+            }
+            else
+            {
+                int xpIndex = combineClosestXPReturnNewUnusedIndex(gameData);
+                gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                gameData.XPPosition[xpIndex] = gameData.EnemyPosition[enemyIndex];
+            }
+
+            return xpPlacedCount;
+        }
+
+        // static void combineClosesXP(GameData gameData)
+        // {
+        //     int count = 0;
+        //     for (int i = 0; i < gameData.XPUsedCount; i++)
+        //     {
+        //         int xpIndex1 = gameData.XPUsedIdxs[i];
+        //         bool removed = false;
+        //         for (int j = i + 1; j < gameData.XPUsedCount; j++)
+        //         {
+        //             int xpIndex2 = gameData.XPUsedIdxs[j];
+        //             if ((gameData.XPPosition[xpIndex1] - gameData.XPPosition[xpIndex2]).sqrMagnitude < 0.1f)
+        //             {
+        //                 gameData.XPValue[xpIndex2] += gameData.XPValue[xpIndex1];
+        //                 gameData.XPUnusedIdxs[gameData.XPUnusedCount++] = xpIndex1;
+        //                 removed = true;
+        //                 break;
+        //             }
+        //         }
+        //         if (!removed)
+        //             gameData.XPUsedIdxs[count++] = xpIndex1;
+        //     }
+        //     gameData.XPUsedCount = count;
+        // }
+
+        static int combineClosestXPReturnNewUnusedIndex(GameData gameData)
+        {
+            int closestIndex1 = 0;
+            int closestIndex2 = 1;
+            float closestDistanceSqr = float.MaxValue;
+
+            for (int i = 0; i < gameData.XPUsedCount; i++)
+            {
+                int xpIndex1 = gameData.XPUsedIdxs[i];
+                for (int j = i + 1; j < gameData.XPUsedCount; j++)
+                {
+                    int xpIndex2 = gameData.XPUsedIdxs[j];
+
+                    Vector2 diff = gameData.XPPosition[xpIndex1] - gameData.XPPosition[xpIndex2];
+                    float distanceSqr = diff.sqrMagnitude;
+                    if (distanceSqr < closestDistanceSqr)
+                    {
+                        closestIndex1 = xpIndex1;
+                        closestIndex2 = xpIndex2;
+                        closestDistanceSqr = distanceSqr;
+                    }
+                }
+            }
+            gameData.XPValue[closestIndex1] += gameData.XPValue[closestIndex2];
+            gameData.XPValue[closestIndex2] = 0.0f;
+            return closestIndex2;
+        }
+
+        static int getClosestXPIndexForEnemy(GameData gameData, int enemyIndex)
+        {
+            int closestIndex = -1;
+            float closestDistanceSqr = float.MaxValue;
+            Vector2 enemyPosition = gameData.EnemyPosition[enemyIndex];
+            for (int i = 0; i < gameData.XPUsedCount; i++)
+            {
+                int xpIndex = gameData.XPUsedIdxs[i];
+                Vector2 xpPosition = gameData.XPPosition[xpIndex];
+                float distanceSqr = (xpPosition - enemyPosition).sqrMagnitude;
+                if (distanceSqr < closestDistanceSqr)
+                {
+                    closestDistanceSqr = distanceSqr;
+                    closestIndex = xpIndex;
+                }
+            }
+            return closestIndex;
+        }
+
+        static void timeOutDyingEnemies(
+            GameData gameData,
+            Balance balance,
+            Span<int> deadEnemyIdxs,
+            ref int deadEnemyCount,
+            Span<int> xpPlacedIdxs,
+            ref int xpPlacedCount,
+            float dt)
+        {
+            int count = 0;
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+            {
+                int enemyIndex = gameData.DyingEnemyIdxs[i];
+                gameData.DyingEnemyTimer[i] -= dt;
+                if (gameData.DyingEnemyTimer[i] <= 0.0f)
+                {
+                    markEnemyDead(gameData, balance, enemyIndex, deadEnemyIdxs, ref deadEnemyCount);
+
+                    //dropXP(gameData, balance, enemyIndex, xpPlacedIdxs, ref xpPlacedCount);
+                }
+                else
+                {
+                    gameData.DyingEnemyIdxs[count] = enemyIndex;
+                    gameData.DyingEnemyTimer[count] = gameData.DyingEnemyTimer[i];
+                    count++;
+                }
+            }
+            gameData.DyingEnemyCount = count;
         }
 
         static void moveEnemies(GameData gameData, Balance balance, float dt)
@@ -362,29 +575,179 @@ namespace Survivor
         static void checkEnemyOutOfBounds(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount)
         {
             float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
+            int count = 0;
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
                 if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > distanceSqr)
+                {
                     if (!tryRespawnEnemy(gameData, balance, enemyIdx))
-                        removeEnemy(gameData, balance, enemyIdx, deadEnemyIdxs, ref deadEnemyCount);
+                        markEnemyDead(gameData, balance, enemyIdx, deadEnemyIdxs, ref deadEnemyCount);
+                    else
+                        gameData.AliveEnemyIdxs[count++] = enemyIdx;
+                }
+                else
+                    gameData.AliveEnemyIdxs[count++] = enemyIdx;
             }
+            gameData.AliveEnemyCount = count;
+        }
+
+        static void checkDyingEnemyOutOfBounds(GameData gameData, Balance balance)
+        {
+            float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
+            for (int deIdx = 0; deIdx < gameData.DyingEnemyCount; deIdx++)
+            {
+                int enemyIdx = gameData.DyingEnemyIdxs[deIdx];
+                if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > distanceSqr)
+                    gameData.DyingEnemyTimer[deIdx] = 0.0f;
+            }
+        }
+
+        static void doCarEnemyCollision(
+            MetaData metaData,
+            GameData gameData,
+            Balance balance,
+            Span<int> dyingEnemyIdxs,
+            ref int dyingEnemyCount)
+        {
+            Span<float> collisionRadiusSqr = stackalloc float[balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length];
+            for (int c = 0; c < balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
+            {
+                float collisionRadius = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
+                collisionRadiusSqr[c] = collisionRadius * collisionRadius;
+            }
+
+            int enemyCount = 0;
+            for (int i = 0; i < gameData.AliveEnemyCount; i++)
+            {
+                int enemyIdx = gameData.AliveEnemyIdxs[i];
+                if (doEnemyCircleCollision(gameData, balance, collisionRadiusSqr, enemyIdx))
+                {
+                    int enemyType = gameData.EnemyType[enemyIdx];
+                    gameData.CarVelocity *= balance.EnemyBalance.ImpactSlowdown[enemyType];
+                    if (gameData.CarVelocity < balance.CarBalance.CarBalanceData[gameData.CarType].Velocity * 0.67f)
+                        gameData.CarVelocity = balance.CarBalance.CarBalanceData[gameData.CarType].Velocity * 0.67f;
+
+                    markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
+                }
+                else
+                    gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
+            }
+            gameData.AliveEnemyCount = enemyCount;
+
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+            {
+                int enemyIdx = gameData.DyingEnemyIdxs[i];
+                if (doEnemyCircleCollision(gameData, balance, collisionRadiusSqr, enemyIdx))
+                {
+                    // do nothing
+                }
+            }
+        }
+
+        private static bool doEnemyCircleCollision(GameData gameData, Balance balance, Span<float> collisionRadiusSqr, int enemyIdx)
+        {
+            bool collisionHappened = false;
+            for (int c = 0; c < balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
+            {
+                Vector2 collisionCircle = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex][c];
+                float collisionRadius = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
+                Vector2 diff = gameData.EnemyPosition[enemyIdx] - collisionCircle;
+                if (diff.sqrMagnitude <= collisionRadiusSqr[c])
+                {
+                    gameData.EnemyPosition[enemyIdx] = collisionCircle + diff.normalized * collisionRadius * 1.5f;
+                    collisionHappened = true;
+                }
+            }
+            return collisionHappened;
         }
 
         static void movePlayer(GameData gameData, Balance balance, float dt)
         {
-            Vector2 playerPosition = gameData.PlayerDirection * balance.PlayerBalance.PlayerBalanceData[gameData.PlayerType].Velocity * dt;
+            gameData.PlayerDirection = gameData.PlayerTargetDirection;
+            gameData.PlayerDelta = gameData.PlayerDirection * balance.HeroBalance.HeroBalanceData[gameData.HeroType].Velocity * dt;
 
+            moveObjectsAroundPlayer(gameData, dt);
+        }
+
+        static void moveCar(GameData gameData, Balance balance, float dt)
+        {
+            // gameData.PlayerDirection = RotateVector(gameData.PlayerDirection, gameData.CarRotationAngle * dt);
+
+            float angle = Vector2.Angle(gameData.PlayerDirection, gameData.PlayerTargetDirection);
+            Vector2 lerpVector = gameData.PlayerDirection;
+            float velocityMultiplier = 1.0f;
+            if (angle > 0.0f)
+            {
+                float angleSize = Mathf.Abs(angle / 180.0f);
+                float angleVelocity = 180.0f * angleSize * dt * 4.0f; // how fast are we moving towards the angle
+                float t = angleVelocity / angle;
+                if (t > 1.0f)
+                    t = 1.0f;
+
+                lerpVector = Vector2.Lerp(gameData.PlayerDirection, gameData.PlayerTargetDirection, t);
+                // velocityMultiplier = lerpVector.magnitude;
+                Debug.Log("moveCar()");
+                Debug.Log("gameData.PlayerDirection " + gameData.PlayerDirection + " gameData.PlayerTargetDirection " + gameData.PlayerTargetDirection + " t " + t);
+                Debug.Log("angleVelocity " + angleVelocity + " angle " + angle + " t " + t);
+                Debug.Log("lerpVector " + lerpVector.ToString() + " t " + t + " velocityMultiplier " + velocityMultiplier + " lerpVector.normalized " + lerpVector.normalized.ToString());
+            }
+
+            gameData.PlayerDirection = lerpVector.normalized;
+            gameData.CarSlideDirection = (gameData.PlayerDirection + gameData.PlayerTargetDirection) / 2.0f;
+
+            float playerAngle = Vector2.Angle(Vector2.up, gameData.CarSlideDirection);
+            int slideIndex = Mathf.RoundToInt(playerAngle / balance.CarBalance.CarBalanceData[gameData.CarType].AngleDelta);
+            if (slideIndex > balance.CarBalance.CarBalanceData[gameData.CarType].NumCarFrames - 1)
+                slideIndex = balance.CarBalance.CarBalanceData[gameData.CarType].NumCarFrames - 1;
+            gameData.CarSlideIndex = slideIndex;
+
+            gameData.CarVelocity += balance.CarBalance.CarBalanceData[gameData.CarType].Acceleration * dt;
+            if (gameData.CarVelocity > balance.CarBalance.CarBalanceData[gameData.CarType].Velocity)
+                gameData.CarVelocity = balance.CarBalance.CarBalanceData[gameData.CarType].Velocity;
+
+            gameData.PlayerDelta = gameData.PlayerDirection * gameData.CarVelocity * dt * velocityMultiplier;
+            moveObjectsAroundPlayer(gameData, dt);
+
+            for (int tireIdx = 0; tireIdx < 4; tireIdx++)
+                gameData.PrevTirePosition[tireIdx] = balance.CarBalance.CarBalanceData[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx] - gameData.PlayerDelta;
+        }
+
+        static void moveObjectsAroundPlayer(GameData gameData, float dt)
+        {
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
-                gameData.EnemyPosition[enemyIdx] -= playerPosition;
+                gameData.EnemyPosition[enemyIdx] -= gameData.PlayerDelta;
             }
+
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+            {
+                int enemyIdx = gameData.DyingEnemyIdxs[i];
+                gameData.EnemyPosition[enemyIdx] -= gameData.PlayerDelta;
+            }
+
+            for (int i = 0; i < gameData.AliveEnemyCount; i++)
+                for (int j = 0; j < gameData.DyingEnemyCount; j++)
+                    if (gameData.AliveEnemyIdxs[i] == gameData.DyingEnemyIdxs[j])
+                        Debug.LogError("alive enemy " + i + " and dying enemy " + j + " have the same idxs");
+
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+                for (int j = i + 1; j < gameData.DyingEnemyCount; j++)
+                    if (gameData.DyingEnemyIdxs[i] == gameData.DyingEnemyIdxs[j])
+                        Debug.LogError("dying enemy " + i + " and " + j + " have the same idxs " + gameData.DyingEnemyIdxs[i]);
+
 
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
-                gameData.AmmoPosition[ammoIndex] -= playerPosition;
+                gameData.AmmoPosition[ammoIndex] -= gameData.PlayerDelta;
+            }
+
+            for (int i = 0; i < gameData.XPUsedCount; i++)
+            {
+                int xpIndex = gameData.XPUsedIdxs[i];
+                gameData.XPPosition[xpIndex] -= gameData.PlayerDelta;
             }
         }
 
@@ -408,12 +771,21 @@ namespace Survivor
             }
         }
 
-        static void checkAmmoEnemyCollision(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoEnemyCollision(
+            GameData gameData,
+            Balance balance,
+            Span<int> dyingEnemyIdxs,
+            ref int dyingEnemyCount,
+            Span<int> deadAmmoIdxs,
+            ref int deadAmmoCount)
         {
+            int ammoCount = 0;
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
+                bool ammoRemoved = false;
                 float distanceSqr = balance.WeaponBalance.TriggerRadius[gameData.AmmoType[ammoIndex]] * balance.WeaponBalance.TriggerRadius[gameData.AmmoType[ammoIndex]];
+                int enemyCount = 0;
                 for (int j = 0; j < gameData.AliveEnemyCount; j++)
                 {
                     int enemyIndex = gameData.AliveEnemyIdxs[j];
@@ -421,74 +793,92 @@ namespace Survivor
                     if (diff.sqrMagnitude <= distanceSqr)
                     {
                         // bullet impacted enemy
-
-                        gameData.StatsEnemiesKilled++;
-                        removeEnemy(gameData, balance, enemyIndex, deadEnemyIdxs, ref deadEnemyCount);
-
-                        int ammoType = gameData.AmmoType[ammoIndex];
-                        if (balance.WeaponBalance.ExplosionRadius[ammoType] > 0)
-                            checkWeaponEnemyExplosion(gameData, balance, ammoType, gameData.AmmoPosition[ammoIndex], deadEnemyIdxs, ref deadEnemyCount);
+                        markEnemyDyingCheckForDuplicate(gameData, balance, enemyIndex, dyingEnemyIdxs, ref dyingEnemyCount);
 
                         // remove weapon
-                        if (balance.WeaponBalance.DontRemoveOnHit[gameData.AmmoType[ammoIndex]] <= 0.0f)
-                        {
-                            deadWeaponIdxs[deadWeaponCount++] = ammoIndex;
-                            RemoveIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIndex);
-                            gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
-                        }
-
-                        break;
+                        ammoRemoved = true;
                     }
+                    else
+                        gameData.AliveEnemyIdxs[enemyCount++] = enemyIndex;
                 }
+                gameData.AliveEnemyCount = enemyCount;
+
+                if (ammoRemoved)
+                {
+                    int ammoType = gameData.AmmoType[ammoIndex];
+                    if (balance.WeaponBalance.ExplosionRadius[ammoType] > 0)
+                        checkWeaponEnemyExplosion(gameData, balance, ammoType, gameData.AmmoPosition[ammoIndex], dyingEnemyIdxs, ref dyingEnemyCount);
+
+                    deadAmmoIdxs[deadAmmoCount++] = ammoIndex;
+                    gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
+                }
+                else
+                    gameData.AliveAmmoIdx[ammoCount++] = ammoIndex;
+
             }
+            gameData.AliveAmmoCount = ammoCount;
         }
 
-        static void checkWeaponEnemyExplosion(GameData gameData, Balance balance, int ammoType, Vector2 explosionPos, Span<int> deadEnemyIdxs, ref int deadEnemyCount)
+        static void checkWeaponEnemyExplosion(
+            GameData gameData,
+            Balance balance,
+            int ammoType,
+            Vector2 explosionPos,
+            Span<int> dyingEnemyIdxs,
+            ref int dyingEnemyCount)
         {
             float explosionRadius = balance.WeaponBalance.ExplosionRadius[ammoType];
             float squareRadius = explosionRadius * explosionRadius;
+            int enemyCount = 0;
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
                 if ((gameData.EnemyPosition[enemyIdx] - explosionPos).sqrMagnitude < squareRadius)
-                {
-                    gameData.StatsEnemiesKilled++;
-                    removeEnemy(gameData, balance, enemyIdx, deadEnemyIdxs, ref deadEnemyCount);
-                }
+                    markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
+                else
+                    gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
             }
+            gameData.AliveEnemyCount = enemyCount;
         }
 
-        static void removeEnemyTargetIdxFromWeapons(GameData gameData, Balance balance, int enemyIdx)
+        static void changeEnemyTargetIdxFromWeapons(GameData gameData, Balance balance, int enemyIdx)
         {
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
                 if (gameData.AmmoTargetIdx[ammoIndex] == enemyIdx)
                 {
-                    gameData.AmmoTargetIdx[ammoIndex] = -1;
-                    gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
-                    Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
+                    gameData.AmmoTargetIdx[ammoIndex] = GetClosestEnemyToPlayerIdxNotUsed(gameData);
+
+
+                    // gameData.AmmoTargetIdx[ammoIndex] = -1;
+                    // gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
+                    //Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
                 }
             }
         }
 
-        static void checkAmmoOutOfBounds(GameData gameData, Balance balance, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoOutOfBounds(GameData gameData, Balance balance, Span<int> deadAmmoIdxs, ref int deadAmmoCount)
         {
             float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
+            int ammoCount = 0;
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
                 if (gameData.AmmoPosition[ammoIndex].sqrMagnitude > distanceSqr)
                 {
-                    deadWeaponIdxs[deadWeaponCount++] = ammoIndex;
-                    RemoveIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIndex);
+                    deadAmmoIdxs[deadAmmoCount++] = ammoIndex;
                     gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
                 }
+                else
+                    gameData.AliveAmmoIdx[ammoCount++] = ammoIndex;
             }
+            gameData.AliveAmmoCount = ammoCount;
         }
 
-        static void checkAmmoReachedDestination(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount, Span<int> deadWeaponIdxs, ref int deadWeaponCount)
+        static void checkAmmoReachedDestination(GameData gameData, Balance balance, Span<int> dyingEnemyIdxs, ref int dyingEnemyCount, Span<int> deadAmmoIdxs, ref int deadAmmoCount)
         {
+            int ammoCount = 0;
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
@@ -496,52 +886,39 @@ namespace Survivor
                 float radius = balance.WeaponBalance.TriggerRadius[ammoType];
                 if ((gameData.AmmoPosition[ammoIndex] - gameData.AmmoTargetPos[ammoIndex]).sqrMagnitude < (radius * radius))
                 {
-                    checkWeaponEnemyExplosion(gameData, balance, gameData.AmmoType[ammoIndex], gameData.AmmoPosition[ammoIndex], deadEnemyIdxs, ref deadEnemyCount);
+                    checkWeaponEnemyExplosion(gameData, balance, gameData.AmmoType[ammoIndex], gameData.AmmoPosition[ammoIndex], dyingEnemyIdxs, ref dyingEnemyCount);
 
-                    deadWeaponIdxs[deadWeaponCount++] = ammoIndex;
-                    RemoveIndexFromArray(gameData.AliveAmmoIdx, ref gameData.AliveAmmoCount, ammoIndex);
+                    deadAmmoIdxs[deadAmmoCount++] = ammoIndex;
                     gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;
                 }
+                else
+                    gameData.AliveAmmoIdx[ammoCount++] = ammoIndex;
             }
+            gameData.AliveAmmoCount = ammoCount;
         }
 
-        public static void RemoveIndexFromArray(int[] array, ref int arrayCount, int index)
+        public static void MouseMovePlayer(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
         {
-            int count = 0;
-            for (int i = 0; i < arrayCount; i++)
-                if (array[i] != index)
-                    array[count++] = array[i];
-            arrayCount = count;
+            Vector2 newDirection = (mouseCurrentPos - mouseDownPos).normalized;
+            gameData.PlayerDirection = gameData.PlayerTargetDirection = newDirection;
+        }
+
+        public static void MouseMoveCar(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
+        {
+            Vector2 newDirection = (mouseCurrentPos - mouseDownPos).normalized;
+            gameData.PlayerTargetDirection = newDirection;
         }
 
 
-        public static void MouseMove(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
+        public static void MouseUpPlayer(GameData gameData)
         {
-            gameData.LastPlayerDirection = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : gameData.LastPlayerDirection;
-            gameData.PlayerDirection = (mouseCurrentPos - mouseDownPos).normalized;
+            gameData.PlayerDirection = gameData.PlayerTargetDirection = Vector2.zero;
         }
 
-        public static void MouseUp(GameData gameData)
+        public static void MouseUpCar(GameData gameData)
         {
-            gameData.LastPlayerDirection = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : gameData.LastPlayerDirection;
-            gameData.PlayerDirection = Vector2.zero;
-        }
-
-        static bool checkGameOver(MetaData metaData, GameData gameData, Balance balance)
-        {
-            for (int i = 0; i < gameData.AliveEnemyCount; i++)
-            {
-                int enemyIdx = gameData.AliveEnemyIdxs[i];
-                if (gameData.EnemyPosition[enemyIdx].magnitude < balance.MinCollisionDistance)
-                {
-                    if (gameData.GameTime > metaData.BestTime)
-                        metaData.BestTime = gameData.GameTime;
-
-                    gameData.InGame = false;
-                    return true;
-                }
-            }
-            return false;
+            // do nothing
+            // gameData.CarRotationAngle = 0.0f;            
         }
 
         public static void SetMenuState(MetaData metaData, MENU_STATE newMenuState)

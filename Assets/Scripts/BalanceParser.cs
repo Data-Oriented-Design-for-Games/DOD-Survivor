@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -78,11 +79,13 @@ namespace Survivor
                     bw.Write(balanceSO.MaxEnemies);
                     bw.Write(balanceSO.SpawnRadius);
 
-                    bw.Write(balanceSO.MinCollisionDistance);
                     bw.Write(balanceSO.MaxPlayerWeapons);
 
                     bw.Write(balanceSO.MaxAmmo);
                     bw.Write(balanceSO.MaxParticles);
+
+                    bw.Write(balanceSO.MaxXP);
+                    bw.Write(balanceSO.XPAnimatedSprite.name);
 
                     List<Object> objects = new List<Object>();
 
@@ -115,13 +118,49 @@ namespace Survivor
                     for (int playerIdx = 0; playerIdx < numPlayers; playerIdx++)
                     {
                         PlayerSO playerSO = (PlayerSO)objects[playerIdx];
-                        bw.Write(playerSO.AnimatedSprite.name);
+                        bw.Write(playerSO.Player.name);
+
                         bw.Write(playerSO.HP);
                         bw.Write(playerSO.Velocity);
                         bw.Write(playerSO.Weapon.ID);
                     }
 
-                    Dictionary<string, int> spriteNameToType = new Dictionary<string, int>();
+                    objects.Clear();
+                    AddObjectsFromDirectory("Assets/Data/Cars", objects, typeof(CarSO));
+                    int numCars = objects.Count;
+                    Debug.Log("numCars " + numCars);
+                    bw.Write(numCars);
+                    for (int carIdx = 0; carIdx < numCars; carIdx++)
+                    {
+                        CarSO carSO = (CarSO)objects[carIdx];
+                        bw.Write(carSO.Car.name);
+                        bw.Write(carSO.HP);
+                        bw.Write(carSO.Velocity);
+                        bw.Write(carSO.Acceleration);
+
+                        int numCarFrames = carSO.Car.CarFrameInfo.Length;
+                        bw.Write(numCarFrames);
+                        bw.Write(360.0f / (float)numCarFrames);
+                        for (int frameIdx = 0; frameIdx < numCarFrames; frameIdx++)
+                        {
+                            int numCircleCollisions = carSO.Car.CarFrameInfo[frameIdx].CollisionCircles.Length;
+                            bw.Write(numCircleCollisions);
+                            for (int circleIdx = 0; circleIdx < numCircleCollisions; circleIdx++)
+                            {
+                                bw.Write(carSO.Car.CarFrameInfo[frameIdx].CollisionCircles[circleIdx].transform.localPosition.x);
+                                bw.Write(carSO.Car.CarFrameInfo[frameIdx].CollisionCircles[circleIdx].transform.localPosition.y);
+                                bw.Write(carSO.Car.CarFrameInfo[frameIdx].CollisionCircles[circleIdx].transform.localScale.x / 2.0f);
+                            }
+
+                            for (int tireIdx = 0; tireIdx < 4; tireIdx++)
+                            {
+                                bw.Write(carSO.Car.CarFrameInfo[frameIdx].Tires[tireIdx].transform.localPosition.x);
+                                bw.Write(carSO.Car.CarFrameInfo[frameIdx].Tires[tireIdx].transform.localPosition.y);
+                            }
+                        }
+                    }
+
+                    Dictionary<string, int> objectNameToType = new Dictionary<string, int>();
                     int spriteNameCounter = 0;
 
                     objects.Clear();
@@ -129,7 +168,7 @@ namespace Survivor
                     int numWeapons = objects.Count;
                     Debug.Log("numWeapons " + numWeapons);
                     bw.Write(numWeapons);
-                    spriteNameToType.Clear();
+                    objectNameToType.Clear();
                     spriteNameCounter = 0;
                     for (int weaponIdx = 0; weaponIdx < numWeapons; weaponIdx++)
                     {
@@ -137,9 +176,9 @@ namespace Survivor
                         bw.Write(weaponSO.ID);
 
                         bw.Write(weaponSO.AnimatedSprite.name);
-                        if (!spriteNameToType.ContainsKey(weaponSO.AnimatedSprite.name))
-                            spriteNameToType[weaponSO.AnimatedSprite.name] = spriteNameCounter++;
-                        bw.Write(spriteNameToType[weaponSO.AnimatedSprite.name]);
+                        if (!objectNameToType.ContainsKey(weaponSO.AnimatedSprite.name))
+                            objectNameToType[weaponSO.AnimatedSprite.name] = spriteNameCounter++;
+                        bw.Write(objectNameToType[weaponSO.AnimatedSprite.name]);
 
                         string explosionName = (weaponSO.ExplosionSprite == null) ? "" : weaponSO.ExplosionSprite.name;
                         bw.Write(explosionName);
@@ -149,9 +188,6 @@ namespace Survivor
                         bw.Write(weaponSO.Velocity);
                         bw.Write(weaponSO.AngularVelocity);
                         bw.Write(weaponSO.TriggerRadius);
-
-                        float dontRemoveOnHit = weaponSO.RemoveOnHit ? 0.0f : 1.0f;
-                        bw.Write(dontRemoveOnHit);
 
                         bw.Write(weaponSO.ExplosionRadius);
                         bw.Write(weaponSO.NumProjectiles);
@@ -164,21 +200,25 @@ namespace Survivor
                     int numEnemies = objects.Count;
                     Debug.Log("numEnemies " + numEnemies);
                     bw.Write(numEnemies);
-                    spriteNameToType.Clear();
+                    objectNameToType.Clear();
                     spriteNameCounter = 0;
                     for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
                     {
                         EnemySO enemySO = (EnemySO)objects[enemyIdx];
                         bw.Write(enemySO.ID);
 
-                        bw.Write(enemySO.AnimatedSprite.name);
-                        if(!spriteNameToType.ContainsKey(enemySO.AnimatedSprite.name))
-                            spriteNameToType[enemySO.AnimatedSprite.name] = spriteNameCounter++;
-                            bw.Write(spriteNameToType[enemySO.AnimatedSprite.name]);
+                        bw.Write(enemySO.WalkingAnimation.name);
+                        if (!objectNameToType.ContainsKey(enemySO.WalkingAnimation.name))
+                            objectNameToType[enemySO.WalkingAnimation.name] = spriteNameCounter++;
+                        bw.Write(objectNameToType[enemySO.WalkingAnimation.name]);
+                        bw.Write(enemySO.DeathAnimation.name);
+                        bw.Write(enemySO.DeathAnimation.FrameTime * enemySO.DeathAnimation.Sprites.Length);
 
                         bw.Write(enemySO.Velocity);
                         bw.Write(enemySO.Radius);
                         bw.Write(enemySO.HP);
+                        bw.Write(enemySO.XP);
+                        bw.Write(enemySO.ImpactSlowdown);
                     }
 
                     int magic = 123456789;

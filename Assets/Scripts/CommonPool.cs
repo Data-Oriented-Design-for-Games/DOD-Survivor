@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Survivor
 {
-    public class PoolData
+    public class AnimatedSpritePoolData
     {
         public AnimatedSprite[] Pool;
         public bool[] Used;
@@ -22,7 +22,7 @@ namespace Survivor
 
     public static class CommonPool
     {
-        public static void Init(PoolData poolData, int maxItems)
+        public static void Init(AnimatedSpritePoolData poolData, int maxItems)
         {
             poolData.MaxItems = maxItems;
             poolData.Pool = new AnimatedSprite[maxItems];
@@ -37,16 +37,18 @@ namespace Survivor
             poolData.LiveCount = 0;
         }
 
-        public static void ShowPoolItem(PoolData poolData, Vector2 position, int index)
+        public static void ShowPoolItem(AnimatedSpritePoolData poolData, Vector2 position, float angle, int poolIndex)
         {
-            poolData.LiveIdxs[poolData.LiveCount++] = index;
+            poolData.LiveIdxs[poolData.LiveCount++] = poolIndex;
 
-            poolData.Pool[index].transform.localPosition = position;
-            poolData.Pool[index].gameObject.SetActive(true);
+            poolData.Pool[poolIndex].transform.localPosition = position;
+            poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, angle);
+            poolData.Pool[poolIndex].gameObject.SetActive(true);
 
+            // Debug.Log("ShowPoolItem " + poolData.Pool[poolIndex].name + " poolIndex " + poolIndex);
         }
 
-        public static void Clear(PoolData poolData)
+        public static void Clear(AnimatedSpritePoolData poolData)
         {
             for (int i = 0; i < poolData.LiveCount; i++)
             {
@@ -64,13 +66,36 @@ namespace Survivor
             poolData.LiveCount = 0;
         }
 
-        public static void HidePoolItem(PoolData poolData, int poolIndex)
+        public static int GetFreePoolIndex(AnimatedSpritePoolData m_poolData, Balance balance, string spriteName, string spritePath, Transform spriteParent, int spriteType)
+        {
+            int poolIndex = TryGetUnusedPoolItem(m_poolData, balance, spriteType);
+
+            if (poolIndex == -1)
+            {
+                poolIndex = GetNewPoolItemIndex(m_poolData, spriteType);
+                m_poolData.Pool[poolIndex] = AssetManager.Instance.GetAnimatedSprite(spriteName, spritePath, spriteParent);
+                m_poolData.Pool[poolIndex].name = spriteName + " " + poolIndex.ToString();
+            }
+
+            CommonVisual.InitSpriteFrameData(ref m_poolData.m_spriteAnimationData[poolIndex], m_poolData.Pool[poolIndex]);
+
+            return poolIndex;
+        }
+
+        public static void HidePoolItem(AnimatedSpritePoolData poolData, int poolIndex)
         {
             poolData.Used[poolIndex] = false;
             poolData.Pool[poolIndex].gameObject.SetActive(false);
+            // Debug.Log("HidePoolItem " + poolData.Pool[poolIndex].name + " poolIndex " + poolIndex);
+
+            int count = 0;
+            for (int i = 0; i < poolData.LiveCount; i++)
+                if (poolData.LiveIdxs[i] != poolIndex)
+                    poolData.LiveIdxs[count++] = poolData.LiveIdxs[i];
+            poolData.LiveCount = count;
         }
 
-        public static int TryGetUnusedPoolItem(PoolData poolData, Balance balance, int type)
+        public static int TryGetUnusedPoolItem(AnimatedSpritePoolData poolData, Balance balance, int type)
         {
             for (int i = 0; i < poolData.Count; i++)
                 if (!poolData.Used[i] && poolData.Type[i] == type)
@@ -82,7 +107,7 @@ namespace Survivor
             return -1;
         }
 
-        public static int GetNewPoolItemIndex(PoolData poolData, int type)
+        public static int GetNewPoolItemIndex(AnimatedSpritePoolData poolData, int type)
         {
             if (poolData.Count == poolData.MaxItems)
                 Debug.LogError("Pool out of space! Allocated " + poolData.MaxItems + " items!");
@@ -95,7 +120,7 @@ namespace Survivor
             return index;
         }
 
-        public static void Tick(PoolData poolData, float dt)
+        public static void Tick(AnimatedSpritePoolData poolData, float dt)
         {
             for (int i = 0; i < poolData.LiveCount; i++)
             {

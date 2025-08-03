@@ -6,7 +6,9 @@ namespace Survivor
     public class PlayerSO : ScriptableObject
     {
         [HideInInspector] public int ID;
-        public AnimatedSprite AnimatedSprite;
+        public GameObject Player;
+        public float[] CollisionOffset;
+        public float[] CollisionRadius;
         public float HP;
         public float Velocity;
         public WeaponSO Weapon;

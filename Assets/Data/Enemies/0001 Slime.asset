@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: 0001 Slime
   m_EditorClassIdentifier: 
   ID: 1
-  AnimatedSprite: {fileID: 2847892865747687350, guid: 6096dab9120e94ceb9a5a174dbdbc091, type: 3}
+  WalkingAnimation: {fileID: 2847892865747687350, guid: 6096dab9120e94ceb9a5a174dbdbc091, type: 3}
+  DeathAnimation: {fileID: 2847892865747687350, guid: fd166056d7874420790b11b16b4e794e, type: 3}
   Velocity: 0.1
   Radius: 0.1
   HP: 10
+  XP: 1
+  ImpactSlowdown: 0

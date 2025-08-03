@@ -6,10 +6,10 @@ namespace Survivor
 {
     public class EnemyPool
     {
-        PoolData m_poolData;
+        AnimatedSpritePoolData m_poolData;
 
-        public int[] PoolIndexToEnemyIndex;
-        public int[] EnemyIndexToPoolIndex;
+        int[] m_poolIndexToEnemyIndex;
+        int[] m_enemyIndexToPoolIndex;
 
         Balance balance;
         Transform spriteParent;
@@ -19,10 +19,10 @@ namespace Survivor
             this.balance = balance;
             this.spriteParent = spriteParent;
 
-            m_poolData = new PoolData();
+            m_poolData = new AnimatedSpritePoolData();
             CommonPool.Init(m_poolData, balance.MaxEnemies * 10);
-            PoolIndexToEnemyIndex = new int[balance.MaxEnemies * 10];
-            EnemyIndexToPoolIndex = new int[balance.MaxEnemies];
+            m_poolIndexToEnemyIndex = new int[balance.MaxEnemies * 10];
+            m_enemyIndexToPoolIndex = new int[balance.MaxEnemies];
         }
 
         public void Clear()
@@ -33,31 +33,26 @@ namespace Survivor
         public void ShowEnemy(int enemyIndex, int spriteType, Vector2 position)
         {
             int poolIndex = getFreePoolIndex(spriteType);
-            PoolIndexToEnemyIndex[poolIndex] = enemyIndex;
-            EnemyIndexToPoolIndex[enemyIndex] = poolIndex;
+            m_poolIndexToEnemyIndex[poolIndex] = enemyIndex;
+            m_enemyIndexToPoolIndex[enemyIndex] = poolIndex;
 
-            CommonPool.ShowPoolItem(m_poolData, position, poolIndex);
+            // Debug.Log("ShowEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
+
+            CommonPool.ShowPoolItem(m_poolData, position, 0.0f, poolIndex);
         }
 
         public void HideEnemy(int enemyIndex)
         {
-            int poolIndex = EnemyIndexToPoolIndex[enemyIndex];
+            int poolIndex = m_enemyIndexToPoolIndex[enemyIndex];
+            // Debug.Log("HideEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
             CommonPool.HidePoolItem(m_poolData, poolIndex);
         }
 
         int getFreePoolIndex(int spriteType)
         {
-            int poolIndex = CommonPool.TryGetUnusedPoolItem(m_poolData, balance, spriteType);
+            string spriteName = balance.EnemyBalance.SpriteName[spriteType];
+            int poolIndex = CommonPool.GetFreePoolIndex(m_poolData, balance, spriteName, "Enemies/", spriteParent, spriteType);
 
-            if (poolIndex == -1)
-            {
-                poolIndex = CommonPool.GetNewPoolItemIndex(m_poolData, spriteType);
-
-                string name = balance.EnemyBalance.SpriteName[spriteType];
-                m_poolData.Pool[poolIndex] = AssetManager.Instance.GetEnemy(name, spriteParent);
-            }
-
-            CommonVisual.InitSpriteFrameData(ref m_poolData.m_spriteAnimationData[poolIndex], m_poolData.Pool[poolIndex]);
             m_poolData.m_spriteAnimationData[poolIndex].FrameIndex = Mathf.FloorToInt(Random.value * m_poolData.m_spriteAnimationData[poolIndex].NumFrames);
 
             return poolIndex;
@@ -76,10 +71,11 @@ namespace Survivor
             for (int i = 0; i < m_poolData.LiveCount; i++)
             {
                 int poolIndex = m_poolData.LiveIdxs[i];
-                int enemyIndex = PoolIndexToEnemyIndex[poolIndex];
-                m_poolData.Pool[poolIndex].transform.localPosition = gameData.EnemyPosition[enemyIndex];
-                float scaleX = m_poolData.Pool[poolIndex].transform.localPosition.x < 0.0f ? 1.0f : -1.0f;
-                m_poolData.Pool[poolIndex].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f);
+                int enemyIndex = m_poolIndexToEnemyIndex[poolIndex];
+                m_poolData.Pool[poolIndex].transform.localPosition = new Vector3(gameData.EnemyPosition[enemyIndex].x, gameData.EnemyPosition[enemyIndex].y, -5.0f);
+
+                // float enemyAngle = Vector2.SignedAngle(Vector2.up, -gameData.EnemyPosition[enemyIndex].normalized);
+                // m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, enemyAngle);
             }
         }
     }

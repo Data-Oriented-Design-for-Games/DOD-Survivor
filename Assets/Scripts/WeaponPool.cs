@@ -4,7 +4,7 @@ namespace Survivor
 {
     public class WeaponPool
     {
-        PoolData m_poolData;
+        AnimatedSpritePoolData m_poolData;
 
         public int[] PoolIndexToWeaponIndex;
         public int[] WeaponIndexToPoolIndex;
@@ -17,7 +17,7 @@ namespace Survivor
             this.balance = balance;
             this.spriteParent = spriteParent;
 
-            m_poolData = new PoolData();
+            m_poolData = new AnimatedSpritePoolData();
             CommonPool.Init(m_poolData, balance.MaxAmmo * 10);
             PoolIndexToWeaponIndex = new int[balance.MaxAmmo * 10];
             WeaponIndexToPoolIndex = new int[balance.MaxAmmo];
@@ -28,13 +28,13 @@ namespace Survivor
             CommonPool.Clear(m_poolData);
         }
 
-        public void ShowWeapon(int weaponIndex, int spriteType, Vector2 position)
+        public void ShowAmmo(int weaponIndex, int spriteType, Vector2 position)
         {
             int poolIndex = getFreePoolIndex(spriteType);
             PoolIndexToWeaponIndex[poolIndex] = weaponIndex;
             WeaponIndexToPoolIndex[weaponIndex] = poolIndex;
 
-            CommonPool.ShowPoolItem(m_poolData, position, poolIndex);
+            CommonPool.ShowPoolItem(m_poolData, position, 0.0f, poolIndex);
         }
 
         public void HideWeapon(int weaponIndex)
@@ -45,17 +45,9 @@ namespace Survivor
 
         int getFreePoolIndex(int spriteType)
         {
-            int poolIndex = CommonPool.TryGetUnusedPoolItem(m_poolData, balance, spriteType);
+            string spriteName = balance.WeaponBalance.SpriteName[spriteType];
+            int poolIndex = CommonPool.GetFreePoolIndex(m_poolData, balance, spriteName, "Weapons/", spriteParent, spriteType);
 
-            if (poolIndex == -1)
-            {
-                poolIndex = CommonPool.GetNewPoolItemIndex(m_poolData, spriteType);
-
-                string name = balance.WeaponBalance.SpriteName[spriteType];
-                m_poolData.Pool[poolIndex] = AssetManager.Instance.GetWeapon(name, spriteParent);
-            }
-
-            CommonVisual.InitSpriteFrameData(ref m_poolData.m_spriteAnimationData[poolIndex], m_poolData.Pool[poolIndex]);
             m_poolData.m_spriteAnimationData[poolIndex].FrameIndex = Mathf.FloorToInt(Random.value * m_poolData.m_spriteAnimationData[poolIndex].NumFrames);
 
             return poolIndex;

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7161007169233870378}
-  - component: {fileID: 1937349852102195255}
+  - component: {fileID: 1069371016954759964}
   m_Layer: 0
   m_Name: 0000 Mage
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 3121916782535051531}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1937349852102195255
+--- !u!114 &1069371016954759964
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,15 +42,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 4027745325827747290}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7cfa74e594eac400799de3341dd0416b, type: 3}
+  m_Script: {fileID: 11500000, guid: 1bc34b8fbd3cc4b2fbbe2b149fcb4ab9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spriteRenderer: {fileID: 4196958563426430819}
-  Sprites:
+  SpriteFrames:
   - {fileID: 1118739052, guid: b5f9cc85974174cbf83c1005045fc3e0, type: 3}
   - {fileID: -892917942, guid: b5f9cc85974174cbf83c1005045fc3e0, type: 3}
   - {fileID: -387110294, guid: b5f9cc85974174cbf83c1005045fc3e0, type: 3}
   - {fileID: 228914066, guid: b5f9cc85974174cbf83c1005045fc3e0, type: 3}
+  SpriteRenderer: {fileID: 4196958563426430819}
+  NumDirections: 1
+  NumAnimFrames: 4
   FrameTime: 0.1
 --- !u!1 &8080710666891660650
 GameObject:
@@ -63,7 +65,7 @@ GameObject:
   - component: {fileID: 3121916782535051531}
   - component: {fileID: 4196958563426430819}
   m_Layer: 0
-  m_Name: Circle
+  m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

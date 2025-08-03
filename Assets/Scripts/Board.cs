@@ -1,6 +1,8 @@
 using System;
 using CommonTools;
 using TMPro;
+using Unity.VisualScripting;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Survivor
@@ -21,17 +23,28 @@ namespace Survivor
         public bool FrameChanged;
     }
 
+    public class PlayerAnimationData
+    {
+        public SpriteAnimationData SpriteAnimationData;
+        public int DirectionIndex;
+        public int NumDirections;
+        public float Angle;
+    }
+
 
     public class Board : MonoBehaviour
     {
         public Transform SpriteParent;
 
-        AnimatedSprite m_player;
+        Player m_hero;
+        Car m_car;
 
         EnemyPool m_enemyPool = new EnemyPool();
-        WeaponPool m_weaponPool = new WeaponPool();
+        WeaponPool m_ammoPool = new WeaponPool();
         ParticlePool m_trailPool = new ParticlePool();
         ParticlePool m_explosionPool = new ParticlePool();
+        DyingEnemyPool m_dyingEnemyPool = new DyingEnemyPool();
+        XPPool m_xpPool = new XPPool();
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -45,14 +58,7 @@ namespace Survivor
         MetaData metaData;
         Balance balance;
 
-        public class VisualBoardData
-        {
-            public SpriteAnimationData PlayerSpriteAnimData;
-            public SpriteAnimationData[] EnemySpriteAnimData;
-            public SpriteAnimationData[] WeaponSpriteAnimData;
-        }
-
-        VisualBoardData m_visualBoardData = new VisualBoardData();
+        PlayerAnimationData m_playerAnimationData;
 
         public void Init(MetaData metaData, GameData gameData, Balance balance, Camera mainCamera)
         {
@@ -62,23 +68,21 @@ namespace Survivor
             this.gameData = gameData;
             this.balance = balance;
 
-            // player
-            m_player = AssetManager.Instance.GetPlayer(balance.PlayerBalance.PlayerBalanceData[gameData.PlayerType].SpriteName, SpriteParent);
-            m_player.transform.localPosition = Vector2.zero;
-
-            CommonVisual.InitSpriteFrameData(ref m_visualBoardData.PlayerSpriteAnimData, m_player);
-
             // enemies
             m_enemyPool.Init(balance, SpriteParent);
-            m_visualBoardData.EnemySpriteAnimData = new SpriteAnimationData[balance.MaxEnemies];
 
             // weapons
-            m_weaponPool.Init(balance, SpriteParent);
-            m_visualBoardData.WeaponSpriteAnimData = new SpriteAnimationData[balance.MaxAmmo];
+            m_ammoPool.Init(balance, SpriteParent);
 
             // particles
             m_explosionPool.Init(gameData, balance, SpriteParent);
             m_trailPool.Init(gameData, balance, SpriteParent);
+
+            // dead enemies
+            m_dyingEnemyPool.Init(gameData, balance, SpriteParent);
+
+            // xp
+            m_xpPool.Init(gameData, balance, SpriteParent);
 
             // GUI
             m_boardGUI = new BoardGUI();
@@ -89,7 +93,6 @@ namespace Survivor
             m_boardGUI.StatsText = guiRef.GetTextGUI("Stats");
             guiRef.GetButton("Pause").onClick.AddListener(pauseGame);
 
-            m_player.gameObject.SetActive(false);
             InputCircleOut.SetActive(false);
 
             hideUI();
@@ -102,7 +105,16 @@ namespace Survivor
 
         public void Show()
         {
-            m_player.gameObject.SetActive(true);
+            // player
+            m_hero = AssetManager.Instance.GetPlayer(balance.HeroBalance.HeroBalanceData[gameData.HeroType].heroName, SpriteParent);
+            m_hero.transform.localPosition = new Vector3(0.0f, 0.0f, -10.0f);
+            m_playerAnimationData = new PlayerAnimationData();
+            CommonVisual.InitPlayerFrameData(m_playerAnimationData, m_hero);
+            m_hero.gameObject.SetActive(!gameData.InCar);
+
+            m_car = AssetManager.Instance.GetCar(balance.CarBalance.CarBalanceData[gameData.CarType].CarName, SpriteParent);
+            m_car.transform.localPosition = new Vector3(0.0f, 0.0f, -10.0f);
+            m_car.gameObject.SetActive(gameData.InCar);
 
             m_boardGUI.UI.SetActive(true);
         }
@@ -110,11 +122,17 @@ namespace Survivor
         public void Hide()
         {
             m_enemyPool.Clear();
-            m_weaponPool.Clear();
+            m_ammoPool.Clear();
             m_explosionPool.Clear();
             m_trailPool.Clear();
+            m_dyingEnemyPool.Clear();
+            m_xpPool.Clear();
 
-            m_player.gameObject.SetActive(false);
+            m_hero.gameObject.SetActive(false);
+            GameObject.Destroy(m_hero);
+
+            m_car.gameObject.SetActive(false);
+            GameObject.Destroy(m_car);
 
             hideUI();
         }
@@ -133,13 +151,57 @@ namespace Survivor
             int spawnedEnemyCount;
             Span<int> deadEnemyIdxs = stackalloc int[balance.MaxEnemies];
             int deadEnemyCount;
+            Span<int> dyingEnemyIdxs = stackalloc int[balance.MaxEnemies];
+            int dyingEnemyCount;
             Span<int> firedAmmoIdxs = stackalloc int[balance.MaxAmmo];
             int firedAmmoCount;
             Span<int> deadAmmoIdxs = stackalloc int[balance.MaxAmmo];
             int deadAmmoCount;
-            Logic.Tick(metaData, gameData, balance, dt, spawnedEnemyIdxs, out spawnedEnemyCount, deadEnemyIdxs, out deadEnemyCount, firedAmmoIdxs, out firedAmmoCount, deadAmmoIdxs, out deadAmmoCount, out isGameOver);
+            Span<int> xpPlacedIdxs = stackalloc int[balance.MaxXP];
+            int xpPlacedCount;
 
-            updateVisuals(spawnedEnemyIdxs, spawnedEnemyCount, deadEnemyIdxs, deadEnemyCount, firedAmmoIdxs, firedAmmoCount, deadAmmoIdxs, deadAmmoCount, dt);
+            int xpPickedUpMax = 10;
+            Span<int> xpPickedUpIdxs = stackalloc int[xpPickedUpMax];
+            int xpPickedUpCount;
+
+            Logic.Tick(
+                metaData,
+                gameData,
+                balance,
+                dt,
+                spawnedEnemyIdxs,
+                out spawnedEnemyCount,
+                deadEnemyIdxs,
+                out deadEnemyCount,
+                dyingEnemyIdxs,
+                out dyingEnemyCount,
+                firedAmmoIdxs,
+                out firedAmmoCount,
+                deadAmmoIdxs,
+                out deadAmmoCount,
+                xpPlacedIdxs,
+                out xpPlacedCount,
+                xpPickedUpIdxs,
+                out xpPickedUpCount,
+                xpPickedUpMax,
+                out isGameOver);
+
+            updateVisuals(
+                spawnedEnemyIdxs,
+                spawnedEnemyCount,
+                deadEnemyIdxs,
+                deadEnemyCount,
+                dyingEnemyIdxs,
+                dyingEnemyCount,
+                firedAmmoIdxs,
+                firedAmmoCount,
+                deadAmmoIdxs,
+                deadAmmoCount,
+                xpPlacedIdxs,
+                xpPlacedCount,
+                xpPickedUpIdxs,
+                xpPickedUpCount,
+                dt);
 
             if (isGameOver)
                 gameOver();
@@ -150,24 +212,64 @@ namespace Survivor
             int spawnedEnemyCount,
             Span<int> deadEnemyIdxs,
             int deadEnemyCount,
+            Span<int> dyingEnemyIdxs,
+            int dyingEnemyCount,
             Span<int> firedAmmoIdxs,
             int firedAmmoCount,
             Span<int> deadAmmoIdxs,
             int deadAmmoCount,
+            Span<int> xpPlacedIdxs,
+            int xpPlacedCount,
+            Span<int> xpPickedUpIdxs,
+            int xpPickedUpCount,
             float dt)
         {
-            // player
-            CommonVisual.AnimateSprite(dt, ref m_visualBoardData.PlayerSpriteAnimData);
-            CommonVisual.TryChangeSpriteFrame(ref m_visualBoardData.PlayerSpriteAnimData, m_player);
+            if (gameData.InCar) // todo needed?
+                m_playerAnimationData.DirectionIndex = gameData.CarSlideIndex;
 
-            float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
-            m_player.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
+
+            if (gameData.InCar)
+            {
+                m_car.UpdateFrame(m_playerAnimationData);
+
+                // skid marks
+                for (int tireIdx = 2; tireIdx < 4; tireIdx++)
+                {
+                    Vector2 currentTirePos = balance.CarBalance.CarBalanceData[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
+                    currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
+                    currentTirePos.x += UnityEngine.Random.value * 0.1f - 0.05f;
+                    currentTirePos.y += UnityEngine.Random.value * 0.1f - 0.05f;
+                    float angle = UnityEngine.Random.value * 360.0f;
+                    // m_trailPool.ShowParticle(0, currentTirePos, angle, "0001 Fireball Trail");
+                    // Vector2 prevTirePos = gameData.PrevTirePosition[tireIdx];
+                }
+
+            }
+            else
+            {
+                CommonVisual.AnimateSprite(dt, ref m_playerAnimationData.SpriteAnimationData);
+                if (m_playerAnimationData.SpriteAnimationData.FrameChanged)
+                    m_hero.UpdateFrame(m_playerAnimationData);
+            }
+
+            float playerScaleX = gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
+            if (gameData.InCar)
+                m_car.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
+            else
+                m_hero.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
 
             // enemies
+            for (int i = 0; i < dyingEnemyCount; i++)
+            {
+                int enemyIndex = dyingEnemyIdxs[i];
+                int spriteType = balance.EnemyBalance.SpriteType[gameData.EnemyType[enemyIndex]];
+                m_enemyPool.HideEnemy(enemyIndex);
+                m_dyingEnemyPool.ShowDyingEnemy(enemyIndex, spriteType, gameData.EnemyPosition[enemyIndex]);
+            }
             for (int i = 0; i < deadEnemyCount; i++)
             {
                 int enemyIndex = deadEnemyIdxs[i];
-                m_enemyPool.HideEnemy(enemyIndex);
+                m_dyingEnemyPool.HideDyingEnemy(enemyIndex);
             }
             for (int i = 0; i < spawnedEnemyCount; i++)
             {
@@ -177,42 +279,61 @@ namespace Survivor
             }
             m_enemyPool.Tick(gameData, dt);
 
-            // weapons
+            // weapons and ammo
             for (int i = 0; i < firedAmmoCount; i++)
             {
                 int ammoIndex = firedAmmoIdxs[i];
                 int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
-                m_weaponPool.ShowWeapon(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
+                m_ammoPool.ShowAmmo(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
 
             }
             for (int i = 0; i < deadAmmoCount; i++)
             {
                 int ammoIndex = deadAmmoIdxs[i];
-                m_weaponPool.HideWeapon(ammoIndex);
+                m_ammoPool.HideWeapon(ammoIndex);
 
                 if (balance.WeaponBalance.ExplosionName[gameData.AmmoType[ammoIndex]].Length > 0)
                 {
                     int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
-                    m_explosionPool.ShowParticle(spriteType, gameData.AmmoPosition[ammoIndex], balance.WeaponBalance.ExplosionName[spriteType]);
+                    m_explosionPool.ShowParticle(spriteType, gameData.AmmoPosition[ammoIndex], 0.0f, balance.WeaponBalance.ExplosionName[spriteType]);
                 }
             }
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
-                m_trailPool.ShowParticle(gameData.AmmoType[ammoIndex], gameData.AmmoPosition[ammoIndex], balance.WeaponBalance.TrailName[gameData.AmmoType[ammoIndex]]);
+                Vector2 position = gameData.AmmoPosition[ammoIndex];
+                position.x += UnityEngine.Random.value * 0.1f - 0.05f;
+                position.y += UnityEngine.Random.value * 0.1f - 0.05f;
+                float angle = UnityEngine.Random.value * 360.0f;
+
+                m_trailPool.ShowParticle(gameData.AmmoType[ammoIndex], gameData.AmmoPosition[ammoIndex], angle, balance.WeaponBalance.TrailName[gameData.AmmoType[ammoIndex]]);
             }
-            m_weaponPool.Tick(gameData, dt);
+
+            for (int i = 0; i < xpPlacedCount; i++)
+            {
+                int xpIndex = xpPlacedIdxs[i];
+                m_xpPool.ShowXP(xpIndex, 0, gameData.XPPosition[xpIndex]);
+            }
+            for (int i = 0; i < xpPickedUpCount; i++)
+            {
+                int xpIndex = xpPickedUpIdxs[i];
+                m_xpPool.HideXP(xpIndex);
+            }
+
+            m_ammoPool.Tick(gameData, dt);
             m_explosionPool.Tick(dt);
             m_trailPool.Tick(dt);
+            m_dyingEnemyPool.Tick(dt);
+            m_xpPool.Tick(dt);
 
             // ui
             for (int i = 0; i < balance.MaxEnemies; i++)
                 m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
 
             string statsText = "Enemies alive " + gameData.AliveEnemyCount.ToString("N0") + "\n";
+            statsText += "Enemies dying " + gameData.DyingEnemyCount.ToString("N0") + "\n";
             statsText += "Enemies dead " + gameData.StatsEnemiesKilled.ToString("N0");
             m_boardGUI.StatsText.text = statsText;
-
         }
 
         void handleInput()
@@ -223,38 +344,50 @@ namespace Survivor
             bool mouseUp = Input.GetMouseButtonUp(0);
             Vector3 mousePosition = Input.mousePosition;
 #else
-bool mouseDown = (Input.touchCount > 0) && Input.GetTouch(0).phase == TouchPhase.Began;
-bool mouseMove = (Input.touchCount > 0) && Input.GetTouch(0).phase == TouchPhase.Moved;
-bool mouseUp = (Input.touchCount > 0) && (Input.GetTouch(0).phase == TouchPhase.Ended || Input.GetTouch(0).phase == TouchPhase.Canceled);
-Vector3 mousePosition = Vector3.zero;
-if (Input.touchCount > 0)
-mousePosition = Input.GetTouch(0).position;
+            bool mouseDown = (Input.touchCount > 0) && Input.GetTouch(0).phase == TouchPhase.Began;
+            bool mouseMove = (Input.touchCount > 0) && Input.GetTouch(0).phase == TouchPhase.Moved;
+            bool mouseUp = (Input.touchCount > 0) && (Input.GetTouch(0).phase == TouchPhase.Ended || Input.GetTouch(0).phase == TouchPhase.Canceled);
+            Vector3 mousePosition = Vector3.zero;
+            if (Input.touchCount > 0)
+            mousePosition = Input.GetTouch(0).position;
 #endif
             Vector3 mouseWorldPos = m_mainCamera.ScreenToWorldPoint(mousePosition);
             Vector2 mouseLocalPos = SpriteParent.InverseTransformPoint(mouseWorldPos);
 
             if (mouseDown)
-
             {
+                // if (gameData.InCar)
+                //     SteeringWheel.SetActive(true);
+                // else
                 InputCircleOut.SetActive(true);
                 m_mouseDownPos = mouseLocalPos;
             }
 
             if (mouseMove)
             {
+
                 InputCircleOut.transform.position = m_mouseDownPos;
-                Vector2 diff = (mouseLocalPos - m_mouseDownPos);
-                float dist = diff.magnitude;
-                if (dist > 1.0f)
-                    dist = 1.0f;
-                InputCircleIn.transform.localPosition = (mouseLocalPos - m_mouseDownPos).normalized * dist * ((1.0f - InputCircleIn.transform.localScale.x) / 2.0f);
-                Logic.MouseMove(gameData, m_mouseDownPos, mouseLocalPos);
+
+                Vector2 diff = mouseLocalPos - m_mouseDownPos;
+                float magnitude = diff.magnitude;
+                if (magnitude > 1.0f)
+                    magnitude = 1.0f;
+                if (gameData.InCar)
+                    Logic.MouseMoveCar(gameData, m_mouseDownPos, mouseLocalPos);
+                else
+                    Logic.MouseMovePlayer(gameData, m_mouseDownPos, mouseLocalPos);
+
+                InputCircleIn.transform.localPosition = (mouseLocalPos - m_mouseDownPos).normalized * magnitude * ((1.0f - InputCircleIn.transform.localScale.x) / 2.0f);
             }
 
             if (mouseUp)
             {
                 InputCircleOut.SetActive(false);
-                Logic.MouseUp(gameData);
+
+                if (gameData.InCar)
+                    Logic.MouseUpCar(gameData);
+                else
+                    Logic.MouseUpPlayer(gameData);
             }
 
             if (Input.GetKeyUp(KeyCode.Space))
@@ -267,7 +400,7 @@ mousePosition = Input.GetTouch(0).position;
                 {
                     int ammoIndex = firedWeaponIdxs[i];
                     int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
-                    m_weaponPool.ShowWeapon(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
+                    m_ammoPool.ShowAmmo(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
                 }
             }
         }

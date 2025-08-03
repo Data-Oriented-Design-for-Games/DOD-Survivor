@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: 0000 Mage
   m_EditorClassIdentifier: 
   ID: 0
-  AnimatedSprite: {fileID: 1937349852102195255, guid: bef7bc733c981454ab7eff152be4d07a, type: 3}
+  Player: {fileID: 4027745325827747290, guid: 7bed6226c812a4812869d81f9542db44, type: 3}
+  CollisionOffset:
+  - 0
+  CollisionRadius:
+  - 0.1
   HP: 100
   Velocity: 3
   Weapon: {fileID: 11400000, guid: 8326d9843171f4082b9175314c85572d, type: 2}

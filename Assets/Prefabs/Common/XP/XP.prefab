@@ -73,7 +73,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1930690606, guid: 82a9c8182d5744fb58e568f9428a435a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b786c2c885f354511b9d821e163b0493, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 5455207726926211683}
   - component: {fileID: 2847892865747687350}
   m_Layer: 0
-  m_Name: 0000 Skeleton
+  m_Name: XP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,8 +131,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 6499914139954733295}
   Sprites:
-  - {fileID: 1930690606, guid: 82a9c8182d5744fb58e568f9428a435a, type: 3}
-  - {fileID: 1746153196, guid: 82a9c8182d5744fb58e568f9428a435a, type: 3}
-  - {fileID: 1330866359, guid: 82a9c8182d5744fb58e568f9428a435a, type: 3}
-  - {fileID: 6239019, guid: 82a9c8182d5744fb58e568f9428a435a, type: 3}
+  - {fileID: 21300000, guid: b786c2c885f354511b9d821e163b0493, type: 3}
   FrameTime: 0.1

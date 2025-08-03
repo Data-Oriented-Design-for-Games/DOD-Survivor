@@ -22,10 +22,14 @@ namespace Survivor
     {
         public int[] EnemyType;
         public string[] SpriteName;
+        public string[] DyingName;
+        public float[] DyingTime;
         public int[] SpriteType;
         public float[] Velocity;
         public float[] Radius;
         public float[] HP;
+        public float[] XP;
+        public float[] ImpactSlowdown;
     }
 
     public class WeaponBalance
@@ -39,7 +43,6 @@ namespace Survivor
         public float[] Velocity;
         public float[] AngularVelocity;
         public float[] TriggerRadius;
-        public float[] DontRemoveOnHit;
         public float[] ExplosionRadius;
         public int[] NumProjectiles;
         public int[] Damage;
@@ -49,36 +52,54 @@ namespace Survivor
         string[] SpriteIndexToName;
     }
 
-    public struct PlayerBalanceData
+    public struct CarBalanceData
     {
-        public string SpriteName;
+        public string CarName;
+        public int CarHP;
+        public float Velocity;
+        public float Acceleration;
+        public int NumCarFrames;
+        public float AngleDelta;
+        public Vector2[][] CollisionCircles;
+        public float[][] CollisionRadius;
+        public Vector2[][] Tires;        
+    }
+
+    public class CarBalance
+    {
+        public CarBalanceData[] CarBalanceData;
+    }
+
+    public struct HeroBalanceData
+    {
+        public string heroName;
         public int HP;
         public float Velocity;
         public int WeaponID;
     }
 
-    public class PlayerBalance
+    public class HeroBalance
     {
-        public PlayerBalanceData[] PlayerBalanceData;
+        public HeroBalanceData[] HeroBalanceData;
     }
 
     [Serializable]
     public class Balance
     {
-        [Header("Enemies")]
         public int MaxEnemies;
         public float SpawnRadius;
 
-        [Header("Player")]
-        public float MinCollisionDistance;
         public int MaxPlayerWeapons;
 
-        [Header("Weapons")]
         public int MaxAmmo;
         public int MaxParticles;
 
+        public int MaxXP;
+        public string XPName;
+
         public LevelBalance[] LevelBalance;
-        public PlayerBalance PlayerBalance = new PlayerBalance();
+        public HeroBalance HeroBalance = new HeroBalance();
+        public CarBalance CarBalance = new CarBalance();
         public WeaponBalance WeaponBalance = new WeaponBalance();
         public EnemyBalance EnemyBalance = new EnemyBalance();
 
@@ -98,11 +119,13 @@ namespace Survivor
                 MaxEnemies = br.ReadInt32();
                 SpawnRadius = br.ReadSingle();
 
-                MinCollisionDistance = br.ReadSingle();
                 MaxPlayerWeapons = br.ReadInt32();
 
                 MaxAmmo = br.ReadInt32();
                 MaxParticles = br.ReadInt32();
+
+                MaxXP = br.ReadInt32();
+                XPName = br.ReadString();
 
                 int numLevels = br.ReadInt32();
                 LevelBalance = new LevelBalance[numLevels];
@@ -129,13 +152,46 @@ namespace Survivor
                 }
 
                 int numPlayers = br.ReadInt32();
-                PlayerBalance.PlayerBalanceData = new PlayerBalanceData[numPlayers];
+                HeroBalance.HeroBalanceData = new HeroBalanceData[numPlayers];
                 for (int playerIdx = 0; playerIdx < numPlayers; playerIdx++)
                 {
-                    PlayerBalance.PlayerBalanceData[playerIdx].SpriteName = br.ReadString();
-                    PlayerBalance.PlayerBalanceData[playerIdx].HP = br.ReadInt32();
-                    PlayerBalance.PlayerBalanceData[playerIdx].Velocity = br.ReadSingle();
-                    PlayerBalance.PlayerBalanceData[playerIdx].WeaponID = br.ReadInt32();
+                    HeroBalance.HeroBalanceData[playerIdx].heroName = br.ReadString();
+
+                    HeroBalance.HeroBalanceData[playerIdx].HP = br.ReadInt32();
+                    HeroBalance.HeroBalanceData[playerIdx].Velocity = br.ReadSingle();
+                    HeroBalance.HeroBalanceData[playerIdx].WeaponID = br.ReadInt32();
+                }
+
+                int numCars = br.ReadInt32();
+                CarBalance.CarBalanceData = new CarBalanceData[numCars];
+                for (int carIdx = 0; carIdx < numCars; carIdx++)
+                {
+                    CarBalance.CarBalanceData[carIdx].CarName = br.ReadString();
+                    CarBalance.CarBalanceData[carIdx].CarHP = br.ReadInt32();
+                    CarBalance.CarBalanceData[carIdx].Velocity = br.ReadSingle();
+                    CarBalance.CarBalanceData[carIdx].Acceleration = br.ReadSingle();
+
+                    int numCarFrames = br.ReadInt32();
+                    CarBalance.CarBalanceData[carIdx].NumCarFrames = numCarFrames;
+                    CarBalance.CarBalanceData[carIdx].AngleDelta = br.ReadSingle();
+                    CarBalance.CarBalanceData[carIdx].CollisionCircles = new Vector2[numCarFrames][];
+                    CarBalance.CarBalanceData[carIdx].CollisionRadius = new float[numCarFrames][];
+                    CarBalance.CarBalanceData[carIdx].Tires = new Vector2[numCarFrames][];
+                    for (int frameIdx = 0; frameIdx < numCarFrames; frameIdx++)
+                    {
+                        int numCircleCollisions = br.ReadInt32();
+                        CarBalance.CarBalanceData[carIdx].CollisionCircles[frameIdx] = new Vector2[numCircleCollisions];
+                        CarBalance.CarBalanceData[carIdx].CollisionRadius[frameIdx] = new float[numCircleCollisions];
+                        for (int circleIdx = 0; circleIdx < numCircleCollisions; circleIdx++)
+                        {
+                            CarBalance.CarBalanceData[carIdx].CollisionCircles[frameIdx][circleIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
+                            CarBalance.CarBalanceData[carIdx].CollisionRadius[frameIdx][circleIdx] = br.ReadSingle();
+                        }
+
+                        CarBalance.CarBalanceData[carIdx].Tires[frameIdx] = new Vector2[4];
+                        for (int tireIdx = 0; tireIdx < 4; tireIdx++)
+                            CarBalance.CarBalanceData[carIdx].Tires[frameIdx][tireIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
+                    }
                 }
 
                 int numWeapons = br.ReadInt32();
@@ -148,7 +204,6 @@ namespace Survivor
                 WeaponBalance.Velocity = new float[numWeapons];
                 WeaponBalance.AngularVelocity = new float[numWeapons];
                 WeaponBalance.TriggerRadius = new float[numWeapons];
-                WeaponBalance.DontRemoveOnHit = new float[numWeapons];
                 WeaponBalance.ExplosionRadius = new float[numWeapons];
                 WeaponBalance.NumProjectiles = new int[numWeapons];
                 WeaponBalance.AmmoTarget = new AMMO_TARGET[numWeapons];
@@ -164,7 +219,6 @@ namespace Survivor
                     WeaponBalance.Velocity[weaponIdx] = br.ReadSingle();
                     WeaponBalance.AngularVelocity[weaponIdx] = br.ReadSingle();
                     WeaponBalance.TriggerRadius[weaponIdx] = br.ReadSingle();
-                    WeaponBalance.DontRemoveOnHit[weaponIdx] = br.ReadSingle();
                     WeaponBalance.ExplosionRadius[weaponIdx] = br.ReadSingle();
                     WeaponBalance.NumProjectiles[weaponIdx] = br.ReadInt32();
                     WeaponBalance.AmmoTarget[weaponIdx] = (AMMO_TARGET)br.ReadByte();
@@ -175,17 +229,25 @@ namespace Survivor
                 EnemyBalance.EnemyType = new int[numEnemies];
                 EnemyBalance.SpriteName = new string[numEnemies];
                 EnemyBalance.SpriteType = new int[numEnemies];
+                EnemyBalance.DyingName = new string[numEnemies];
+                EnemyBalance.DyingTime = new float[numEnemies];
                 EnemyBalance.Velocity = new float[numEnemies];
                 EnemyBalance.Radius = new float[numEnemies];
                 EnemyBalance.HP = new float[numEnemies];
+                EnemyBalance.XP = new float[numEnemies];
+                EnemyBalance.ImpactSlowdown = new float[numEnemies];
                 for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
                 {
                     EnemyBalance.EnemyType[enemyIdx] = br.ReadInt32();
                     EnemyBalance.SpriteName[enemyIdx] = br.ReadString();
                     EnemyBalance.SpriteType[enemyIdx] = br.ReadInt32();
+                    EnemyBalance.DyingName[enemyIdx] = br.ReadString();
+                    EnemyBalance.DyingTime[enemyIdx] = br.ReadSingle();
                     EnemyBalance.Velocity[enemyIdx] = br.ReadSingle();
                     EnemyBalance.Radius[enemyIdx] = br.ReadSingle();
                     EnemyBalance.HP[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.XP[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.ImpactSlowdown[enemyIdx] = br.ReadSingle();
                 }
 
                 int magic = br.ReadInt32();

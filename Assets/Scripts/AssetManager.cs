@@ -12,18 +12,14 @@ namespace Survivor
     {
         public static bool UseAssetBundles = true;
 
-        [SerializeField] AnimatedSprite m_playerPrefab;
-        [SerializeField] AnimatedSprite m_enemyPrefab;
-        [SerializeField] AnimatedSprite m_ammoPrefab;
+        [SerializeField] GameObject m_UIInGame = null;
+        [SerializeField] GameObject m_UIMainMenu = null;
+        [SerializeField] GameObject m_UIGameOver = null;
+        [SerializeField] GameObject m_UIPauseMenu = null;
 
-        [SerializeField] GameObject m_UIInGame;
-        [SerializeField] GameObject m_UIMainMenu;
-        [SerializeField] GameObject m_UIGameOver;
-        [SerializeField] GameObject m_UIPauseMenu;
-
-        [SerializeField] MainMenuVisual m_MainMenuVisual;
-        [SerializeField] GameOverVisual m_GameOverVisual;
-        [SerializeField] PauseMenuVisual m_PauseMenuVisual;
+        [SerializeField] MainMenuVisual m_MainMenuVisual = null;
+        [SerializeField] GameOverVisual m_GameOverVisual = null;
+        [SerializeField] PauseMenuVisual m_PauseMenuVisual = null;
 
         AssetBundle m_commonBundle;
 
@@ -43,9 +39,23 @@ namespace Survivor
                 m_commonBundle.Unload(true);
         }
 
+        public Sprite loadSprite(AssetBundle assetBundle, string spriteName, string localPath)
+        {
+            Sprite sprite = null;
+#if UNITY_EDITOR
+            if (UseAssetBundles)
+                sprite = assetBundle.LoadAsset<Sprite>(spriteName);
+            else
+                sprite = (Sprite)AssetDatabase.LoadAssetAtPath(localPath, typeof(Sprite));
+#else
+            sprite = assetBundle.LoadAsset<Sprite>(spriteName);
+#endif
+            return sprite;
+        }
+
         GameObject loadGameObject(AssetBundle assetBundle, string objName, string localPath)
         {
-            Debug.Log("loadGameObject objName " + objName + " localPath " + localPath);
+            //Debug.Log("loadGameObject objName " + objName + " localPath " + localPath);
 
             GameObject go = null;
 #if UNITY_EDITOR
@@ -59,26 +69,25 @@ namespace Survivor
             return go;
         }
 
-        public AnimatedSprite GetPlayer(string playerName, Transform spriteParent)
+        public Player GetPlayer(string playerName, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab"), spriteParent).GetComponent<Player>();
         }
 
-        public AnimatedSprite GetEnemy(string enemyName, Transform spriteParent)
+        public Car GetCar(string carName, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies/" + enemyName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, carName, "Assets/Prefabs/Common/Cars/" + carName + ".prefab"), spriteParent).GetComponent<Car>();
         }
 
-        public AnimatedSprite GetWeapon(string weaponName, Transform spriteParent)
+        public AnimatedSprite GetAnimatedSprite(string spriteName, string spritePath, Transform spriteParent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, weaponName, "Assets/Prefabs/Common/Weapons/" + weaponName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, spriteName, "Assets/Prefabs/Common/" + spritePath + spriteName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
         }
 
-        public AnimatedSprite GetParticle(string particleName, Transform spriteParent)
+        public EnemySprite GetEnemy(string enemyName, Transform parent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, particleName, "Assets/Prefabs/Common/Particles/" + particleName + ".prefab"), spriteParent).GetComponent<AnimatedSprite>();
+            return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies" + enemyName + ".prefab"), parent).GetComponent<EnemySprite>();
         }
-
 
         public GameObject GetInGameUI()
         {

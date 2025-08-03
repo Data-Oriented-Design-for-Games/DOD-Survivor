@@ -10,11 +10,14 @@ namespace Survivor
         public float SpawnRadius;
 
         [Header("Player")]
-        public float MinCollisionDistance;
         public int MaxPlayerWeapons;
 
         [Header("Weapons")]
         public int MaxAmmo;
         public int MaxParticles;
+
+        [Header("XP")]
+        public int MaxXP;
+        public AnimatedSprite XPAnimatedSprite;
     }
 }

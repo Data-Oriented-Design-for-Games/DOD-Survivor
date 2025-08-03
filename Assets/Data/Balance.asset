@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxEnemies: 2000
   SpawnRadius: 7
-  MinCollisionDistance: 0.1
   MaxPlayerWeapons: 12
   MaxAmmo: 1000
   MaxParticles: 1000
+  MaxXP: 1000
+  XPAnimatedSprite: {fileID: 2847892865747687350, guid: 1b29548f4d37040b5ace04b95a3eebca, type: 3}
