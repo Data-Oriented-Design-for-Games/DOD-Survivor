@@ -57,7 +57,7 @@ namespace Survivor
             gameData.HeroType = 0;
             gameData.CarType = 0;
 
-            gameData.InCar = false;
+            gameData.InCar = true;
             gameData.PlayerDirection = gameData.InCar ? Vector2.right : Vector2.zero;
             gameData.PlayerTargetDirection = gameData.InCar ? Vector2.right : Vector2.zero;
             gameData.CarSlideDirection = gameData.PlayerDirection;
@@ -102,8 +102,8 @@ namespace Survivor
             gameData.StatsEnemiesKilled = 0;
 
             // TEST - no way to assign them in game yet
-            gameData.PlayerWeaponType[0] = 0;
-            gameData.PlayerWeaponType[1] = 1;
+            // gameData.PlayerWeaponType[0] = 0;
+            // gameData.PlayerWeaponType[1] = 1;
         }
 
         static int spawnEnemy(GameData gameData, Balance balance, int enemyType)

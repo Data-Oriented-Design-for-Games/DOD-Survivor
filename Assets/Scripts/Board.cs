@@ -233,7 +233,7 @@ namespace Survivor
                 m_car.UpdateFrame(m_playerAnimationData);
 
                 // skid marks
-                for (int tireIdx = 2; tireIdx < 4; tireIdx++)
+                for (int tireIdx = 0; tireIdx < 4; tireIdx++)
                 {
                     Vector2 currentTirePos = balance.CarBalance.CarBalanceData[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
                     currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
