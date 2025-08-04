@@ -33,6 +33,7 @@ namespace Survivor
             spriteAnimationData.FrameTime = animatedSprite.FrameTime;
             spriteAnimationData.NumFrames = animatedSprite.Sprites.Length;
             spriteAnimationData.FrameChanged = false;
+            animatedSprite.SetSpriteFrame(spriteAnimationData.FrameIndex);
         }
 
         public static void InitPlayerFrameData(PlayerAnimationData playerAnimationData, Player player)
@@ -41,7 +42,7 @@ namespace Survivor
             playerAnimationData.SpriteAnimationData.FrameTimeLeft = player.FrameTime;
             playerAnimationData.SpriteAnimationData.FrameTime = player.FrameTime;
             playerAnimationData.SpriteAnimationData.NumFrames = player.NumAnimFrames;
-            
+
             playerAnimationData.DirectionIndex = 0;
             playerAnimationData.NumDirections = player.NumDirections;
             playerAnimationData.Angle = 360.0f / (float)playerAnimationData.NumDirections;

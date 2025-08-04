@@ -27,8 +27,8 @@ namespace Survivor
                 }
                 for (int i = 0; i < balance.MaxEnemies; i++)
                 {
-                    bw.Write(gameData.EnemyDirection[i].x);
-                    bw.Write(gameData.EnemyDirection[i].y);
+                    bw.Write(gameData.EnemyPushStartPos[i].x);
+                    bw.Write(gameData.EnemyPushStartPos[i].y);
                 }
 
                 bw.Write(gameData.PlayerDirection.x);
@@ -85,8 +85,8 @@ namespace Survivor
                     }
                     for (int i = 0; i < numEnemies; i++)
                     {
-                        gameData.EnemyDirection[i].x = br.ReadSingle();
-                        gameData.EnemyDirection[i].y = br.ReadSingle();
+                        gameData.EnemyPushStartPos[i].x = br.ReadSingle();
+                        gameData.EnemyPushStartPos[i].y = br.ReadSingle();
                     }
 
                     gameData.PlayerDirection.x = br.ReadSingle();

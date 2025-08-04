@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Unity.Burst.Intrinsics;
 
 namespace Survivor
 {
@@ -8,7 +9,13 @@ namespace Survivor
         public static void AllocateGameData(GameData gameData, Balance balance)
         {
             gameData.EnemyPosition = new Vector2[balance.MaxEnemies];
-            gameData.EnemyDirection = new Vector2[balance.MaxEnemies];
+            gameData.EnemyRotation = new float[balance.MaxEnemies];
+
+            gameData.EnemyPushStartPos = new Vector2[balance.MaxEnemies];
+            gameData.EnemyPushEndPos = new Vector2[balance.MaxEnemies];
+            gameData.EnemyPushValue = new float[balance.MaxEnemies];
+            gameData.EnemyPushRotation = new float[balance.MaxEnemies];
+
             gameData.EnemyType = new int[balance.MaxEnemies];
             gameData.AliveEnemyIdxs = new int[balance.MaxEnemies];
             gameData.DeadEnemyIdxs = new int[balance.MaxEnemies];
@@ -50,7 +57,7 @@ namespace Survivor
             gameData.HeroType = 0;
             gameData.CarType = 0;
 
-            gameData.InCar = true;
+            gameData.InCar = false;
             gameData.PlayerDirection = gameData.InCar ? Vector2.right : Vector2.zero;
             gameData.PlayerTargetDirection = gameData.InCar ? Vector2.right : Vector2.zero;
             gameData.CarSlideDirection = gameData.PlayerDirection;
@@ -95,8 +102,8 @@ namespace Survivor
             gameData.StatsEnemiesKilled = 0;
 
             // TEST - no way to assign them in game yet
-            // gameData.PlayerWeaponType[0] = 0;
-            // gameData.PlayerWeaponType[1] = 1;
+            gameData.PlayerWeaponType[0] = 0;
+            gameData.PlayerWeaponType[1] = 1;
         }
 
         static int spawnEnemy(GameData gameData, Balance balance, int enemyType)
@@ -113,6 +120,8 @@ namespace Survivor
             gameData.AliveEnemyIdxs[gameData.AliveEnemyCount++] = enemyIndex;
             gameData.EnemyPosition[enemyIndex] = direction.normalized * balance.SpawnRadius;
             gameData.EnemyType[enemyIndex] = enemyType;
+            gameData.EnemyRotation[enemyIndex] = 0.0f;
+            gameData.EnemyPushValue[enemyIndex] = 0.0f;
 
             return enemyIndex;
         }
@@ -280,6 +289,8 @@ namespace Survivor
             trySpawnEnemy(gameData, balance, dt, spawnedEnemyIdxs, ref spawnedEnemyCount);
 
             moveEnemies(gameData, balance, dt);
+
+            moveDyingEnemies(gameData, balance, dt);
 
             checkEnemyOutOfBounds(gameData, balance, deadEnemyIdxs, ref deadEnemyCount);
 
@@ -543,9 +554,48 @@ namespace Survivor
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIndex = gameData.AliveEnemyIdxs[i];
-                Vector2 dir = -gameData.EnemyPosition[enemyIndex].normalized;
-                gameData.EnemyPosition[enemyIndex] = gameData.EnemyPosition[enemyIndex] + dir * balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]] * dt;
+
+                if (gameData.EnemyPushValue[enemyIndex] > 0.0f)
+                    moveAndPushEnemy(gameData, dt, enemyIndex);
+                else
+                {
+                    Vector2 dir = -gameData.EnemyPosition[enemyIndex].normalized;
+                    gameData.EnemyPosition[enemyIndex] += dir * balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]] * dt;
+                    if (gameData.EnemyRotation[enemyIndex] > 0.0f)
+                    {
+                        gameData.EnemyRotation[enemyIndex] -= dt * 360.0f;
+                        if (gameData.EnemyRotation[enemyIndex] <= 0.0f)
+                            gameData.EnemyRotation[enemyIndex] = 0.0f;
+                    }
+                    if (gameData.EnemyRotation[enemyIndex] < 0.0f)
+                    {
+                        gameData.EnemyRotation[enemyIndex] += dt * 360.0f;
+                        if (gameData.EnemyRotation[enemyIndex] >= 0.0f)
+                            gameData.EnemyRotation[enemyIndex] = 0.0f;
+                    }
+                }
             }
+        }
+
+        static void moveDyingEnemies(GameData gameData, Balance balance, float dt)
+        {
+            for (int i = 0; i < gameData.DyingEnemyCount; i++)
+            {
+                int enemyIndex = gameData.DyingEnemyIdxs[i];
+                moveAndPushEnemy(gameData, dt, enemyIndex);
+            }
+        }
+
+        private static void moveAndPushEnemy(GameData gameData, float dt, int enemyIndex)
+        {
+            gameData.EnemyPushValue[enemyIndex] -= dt;
+            float value = 1.0f - (gameData.EnemyPushValue[enemyIndex] * gameData.EnemyPushValue[enemyIndex] * gameData.EnemyPushValue[enemyIndex]);
+            gameData.EnemyPosition[enemyIndex] = (gameData.EnemyPushEndPos[enemyIndex] - gameData.EnemyPushStartPos[enemyIndex]) * value + gameData.EnemyPushStartPos[enemyIndex];
+            gameData.EnemyRotation[enemyIndex] += gameData.EnemyPushRotation[enemyIndex] * value * dt;
+            if (gameData.EnemyRotation[enemyIndex] > 180.0f)
+                gameData.EnemyRotation[enemyIndex] -= 360.0f;
+            if (gameData.EnemyRotation[enemyIndex] < -180.0f)
+                gameData.EnemyRotation[enemyIndex] += 360.0f;
         }
 
         static void doEnemyToEnemyCollision(GameData gameData, Balance balance)
@@ -655,11 +705,25 @@ namespace Survivor
                 Vector2 diff = gameData.EnemyPosition[enemyIdx] - collisionCircle;
                 if (diff.sqrMagnitude <= collisionRadiusSqr[c])
                 {
-                    gameData.EnemyPosition[enemyIdx] = collisionCircle + diff.normalized * collisionRadius * 1.5f;
+                    Vector2 diffNormalized = diff.normalized;
+                    Vector2 pushStartPos = collisionCircle + diffNormalized * collisionRadius;
+                    float randomValue = UnityEngine.Random.value * 0.4f + 0.2f;
+                    Vector2 pushEndPos = diffNormalized + gameData.CarSlideDirection * gameData.CarVelocity * randomValue;
+                    pushEnemy(gameData, enemyIdx, pushStartPos, pushEndPos);
+
                     collisionHappened = true;
                 }
             }
             return collisionHappened;
+        }
+
+        private static void pushEnemy(GameData gameData, int enemyIdx, Vector2 pushStartPos, Vector2 pushEndPos)
+        {
+            gameData.EnemyPosition[enemyIdx] = pushStartPos;
+            gameData.EnemyPushStartPos[enemyIdx] = pushStartPos;
+            gameData.EnemyPushEndPos[enemyIdx] = pushEndPos;
+            gameData.EnemyPushValue[enemyIdx] = 1.0f;
+            gameData.EnemyPushRotation[enemyIdx] = UnityEngine.Random.value * 720.0f - 360.0f;
         }
 
         static void movePlayer(GameData gameData, Balance balance, float dt)
@@ -719,12 +783,16 @@ namespace Survivor
             {
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
                 gameData.EnemyPosition[enemyIdx] -= gameData.PlayerDelta;
+                gameData.EnemyPushStartPos[enemyIdx] -= gameData.PlayerDelta;
+                gameData.EnemyPushEndPos[enemyIdx] -= gameData.PlayerDelta;
             }
 
             for (int i = 0; i < gameData.DyingEnemyCount; i++)
             {
                 int enemyIdx = gameData.DyingEnemyIdxs[i];
                 gameData.EnemyPosition[enemyIdx] -= gameData.PlayerDelta;
+                gameData.EnemyPushStartPos[enemyIdx] -= gameData.PlayerDelta;
+                gameData.EnemyPushEndPos[enemyIdx] -= gameData.PlayerDelta;
             }
 
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
@@ -793,6 +861,10 @@ namespace Survivor
                     if (diff.sqrMagnitude <= distanceSqr)
                     {
                         // bullet impacted enemy
+                        Vector2 pushStartPos = gameData.EnemyPosition[enemyIndex];
+                        Vector2 pushEndPos = gameData.EnemyPosition[enemyIndex] + gameData.AmmoDirection[ammoIndex];
+                        pushEnemy(gameData, enemyIndex, pushStartPos, pushEndPos);
+
                         markEnemyDyingCheckForDuplicate(gameData, balance, enemyIndex, dyingEnemyIdxs, ref dyingEnemyCount);
 
                         // remove weapon
@@ -832,11 +904,17 @@ namespace Survivor
             int enemyCount = 0;
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
-                int enemyIdx = gameData.AliveEnemyIdxs[i];
-                if ((gameData.EnemyPosition[enemyIdx] - explosionPos).sqrMagnitude < squareRadius)
-                    markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
+                int enemyIndex = gameData.AliveEnemyIdxs[i];
+                if ((gameData.EnemyPosition[enemyIndex] - explosionPos).sqrMagnitude < squareRadius)
+                {
+                    Vector2 pushStartPos = gameData.EnemyPosition[enemyIndex];
+                    Vector2 pushEndPos = gameData.EnemyPosition[enemyIndex] + (gameData.EnemyPosition[enemyIndex] - explosionPos).normalized;
+                    pushEnemy(gameData, enemyIndex, pushStartPos, pushEndPos);
+
+                    markEnemyDyingCheckForDuplicate(gameData, balance, enemyIndex, dyingEnemyIdxs, ref dyingEnemyCount);
+                }
                 else
-                    gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
+                    gameData.AliveEnemyIdxs[enemyCount++] = enemyIndex;
             }
             gameData.AliveEnemyCount = enemyCount;
         }

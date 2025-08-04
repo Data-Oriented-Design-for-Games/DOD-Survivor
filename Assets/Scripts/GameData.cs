@@ -8,7 +8,13 @@ namespace Survivor
         public bool InGame;
 
         public Vector2[] EnemyPosition;
-        public Vector2[] EnemyDirection;
+        public float[] EnemyRotation;
+
+        public Vector2[] EnemyPushStartPos;
+        public Vector2[] EnemyPushEndPos;
+        public float[] EnemyPushValue;
+        public float[] EnemyPushRotation;
+
         public int[] EnemyType;
         public int[] AliveEnemyIdxs;
         public int AliveEnemyCount;
