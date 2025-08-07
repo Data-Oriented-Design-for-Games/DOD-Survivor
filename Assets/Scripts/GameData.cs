@@ -33,8 +33,13 @@ namespace Survivor
         public Vector2 CarSlideDirection;
         public float CarRotationAngle;
         public bool InCar;
-        public Vector2[] PrevTirePosition;
         public float CarVelocity;
+
+        public int CurrentTireTrackIndex;
+        public int LastTireMarkIndex;
+        public Vector2[] TireMarkPos;
+        public Color[] TireMarkColor;
+        public Color CurrentTireMarkColor;
 
         public Vector2[] AmmoPosition;
         public Vector2[] AmmoDirection;

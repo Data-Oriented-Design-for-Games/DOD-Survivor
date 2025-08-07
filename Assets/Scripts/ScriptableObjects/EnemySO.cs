@@ -8,6 +8,7 @@ namespace Survivor
         [HideInInspector] public int ID;
         public AnimatedSprite WalkingAnimation;
         public AnimatedSprite DeathAnimation;
+        public Color DyingColor;
         public float Velocity;
         public float Radius;
         public float HP;

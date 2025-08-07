@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WaveInfo:
   - EnemySO: {fileID: 11400000, guid: 7744ed73cfe584b648c65cf7874aadf7, type: 2}
-    NumEnemies: 4000
+    NumEnemies: 30000
     StartTime: 0
     EndTime: 30000
     SpawnDelay: 0.005

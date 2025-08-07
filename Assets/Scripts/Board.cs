@@ -45,6 +45,7 @@ namespace Survivor
         ParticlePool m_explosionPool = new ParticlePool();
         DyingEnemyPool m_dyingEnemyPool = new DyingEnemyPool();
         XPPool m_xpPool = new XPPool();
+        TireTrackPool m_tireTrackPool = new TireTrackPool();
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -77,6 +78,7 @@ namespace Survivor
             // particles
             m_explosionPool.Init(gameData, balance, SpriteParent);
             m_trailPool.Init(gameData, balance, SpriteParent);
+            m_tireTrackPool.Init(gameData, balance.MaxTireTracks * 4, SpriteParent, balance.TireTrackName);
 
             // dead enemies
             m_dyingEnemyPool.Init(gameData, balance, SpriteParent);
@@ -112,7 +114,7 @@ namespace Survivor
             CommonVisual.InitPlayerFrameData(m_playerAnimationData, m_hero);
             m_hero.gameObject.SetActive(!gameData.InCar);
 
-            m_car = AssetManager.Instance.GetCar(balance.CarBalance.CarBalanceData[gameData.CarType].CarName, SpriteParent);
+            m_car = AssetManager.Instance.GetCar(balance.CarBalance[gameData.CarType].CarName, SpriteParent);
             m_car.transform.localPosition = new Vector3(0.0f, 0.0f, -10.0f);
             m_car.gameObject.SetActive(gameData.InCar);
 
@@ -235,15 +237,10 @@ namespace Survivor
                 // skid marks
                 for (int tireIdx = 0; tireIdx < 4; tireIdx++)
                 {
-                    Vector2 currentTirePos = balance.CarBalance.CarBalanceData[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
-                    currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
-                    currentTirePos.x += UnityEngine.Random.value * 0.1f - 0.05f;
-                    currentTirePos.y += UnityEngine.Random.value * 0.1f - 0.05f;
-                    float angle = UnityEngine.Random.value * 360.0f;
-                    // m_trailPool.ShowParticle(0, currentTirePos, angle, "0001 Fireball Trail");
-                    // Vector2 prevTirePos = gameData.PrevTirePosition[tireIdx];
+                    int index = tireIdx * balance.MaxTireTracks + gameData.LastTireMarkIndex;
+                    Vector2 tirePos = gameData.TireMarkPos[index];
+                    m_tireTrackPool.ShowTireTrack(tirePos, gameData.TireMarkColor[index]);
                 }
-
             }
             else
             {
@@ -325,6 +322,7 @@ namespace Survivor
             m_trailPool.Tick(dt);
             m_dyingEnemyPool.Tick(dt);
             m_xpPool.Tick(dt);
+            m_tireTrackPool.Tick();
 
             // ui
             for (int i = 0; i < balance.MaxEnemies; i++)

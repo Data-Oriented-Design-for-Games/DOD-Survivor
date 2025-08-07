@@ -81,6 +81,12 @@ namespace Survivor
 
                     bw.Write(balanceSO.MaxPlayerWeapons);
 
+                    bw.Write(balanceSO.MaxTireTracks);
+                    bw.Write(balanceSO.TireTrack.name);
+                    bw.Write(balanceSO.TireTrackColor.r);
+                    bw.Write(balanceSO.TireTrackColor.g);
+                    bw.Write(balanceSO.TireTrackColor.b);
+
                     bw.Write(balanceSO.MaxAmmo);
                     bw.Write(balanceSO.MaxParticles);
 
@@ -213,6 +219,9 @@ namespace Survivor
                         bw.Write(objectNameToType[enemySO.WalkingAnimation.name]);
                         bw.Write(enemySO.DeathAnimation.name);
                         bw.Write(enemySO.DeathAnimation.FrameTime * enemySO.DeathAnimation.Sprites.Length);
+                        bw.Write(enemySO.DyingColor.r);
+                        bw.Write(enemySO.DyingColor.g);
+                        bw.Write(enemySO.DyingColor.b);
 
                         bw.Write(enemySO.Velocity);
                         bw.Write(enemySO.Radius);

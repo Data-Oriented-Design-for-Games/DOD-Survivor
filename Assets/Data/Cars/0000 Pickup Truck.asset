@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: 0
   Car: {fileID: 1713025332759078490, guid: 29a107ea153fe4ff59af40e1a1ebcfca, type: 3}
+  TireMark: {fileID: 4290713088227431407, guid: 1c17ee52cc3534da398deac907835e32, type: 3}
   HP: 100
   Velocity: 4
   Acceleration: 5

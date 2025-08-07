@@ -39,7 +39,8 @@ namespace Survivor
             gameData.XPUsedIdxs = new int[balance.MaxXP];
             gameData.XPUnusedIdxs = new int[balance.MaxXP];
 
-            gameData.PrevTirePosition = new Vector2[4];
+            gameData.TireMarkPos = new Vector2[4 * balance.MaxTireTracks];
+            gameData.TireMarkColor = new Color[4 * balance.MaxTireTracks];
         }
 
         public static void Init(MetaData metaData)
@@ -101,6 +102,9 @@ namespace Survivor
 
             gameData.StatsEnemiesKilled = 0;
 
+            gameData.CurrentTireTrackIndex = 0;
+            gameData.CurrentTireMarkColor = balance.TireTrackColor;
+            
             // TEST - no way to assign them in game yet
             // gameData.PlayerWeaponType[0] = 0;
             // gameData.PlayerWeaponType[1] = 1;
@@ -302,7 +306,10 @@ namespace Survivor
 
             // player
             if (gameData.InCar)
+            {
+                updateTireTracks(gameData, balance, dt);
                 moveCar(gameData, balance, dt);
+            }
             else
                 movePlayer(gameData, balance, dt);
             pickupXP(gameData, xpPickedUpIdxs, ref xpPickedUpCount, xpPickedUpMax);
@@ -660,10 +667,10 @@ namespace Survivor
             Span<int> dyingEnemyIdxs,
             ref int dyingEnemyCount)
         {
-            Span<float> collisionRadiusSqr = stackalloc float[balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length];
-            for (int c = 0; c < balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
+            Span<float> collisionRadiusSqr = stackalloc float[balance.CarBalance[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length];
+            for (int c = 0; c < balance.CarBalance[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
             {
-                float collisionRadius = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
+                float collisionRadius = balance.CarBalance[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
                 collisionRadiusSqr[c] = collisionRadius * collisionRadius;
             }
 
@@ -675,15 +682,18 @@ namespace Survivor
                 {
                     int enemyType = gameData.EnemyType[enemyIdx];
                     gameData.CarVelocity *= balance.EnemyBalance.ImpactSlowdown[enemyType];
-                    if (gameData.CarVelocity < balance.CarBalance.CarBalanceData[gameData.CarType].Velocity * 0.67f)
-                        gameData.CarVelocity = balance.CarBalance.CarBalanceData[gameData.CarType].Velocity * 0.67f;
+                    if (gameData.CarVelocity < balance.CarBalance[gameData.CarType].Velocity * 0.67f)
+                        gameData.CarVelocity = balance.CarBalance[gameData.CarType].Velocity * 0.67f;
 
                     markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
+                    gameData.CurrentTireMarkColor = balance.EnemyBalance.DyingColor[enemyType];
                 }
                 else
                     gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
             }
             gameData.AliveEnemyCount = enemyCount;
+
+            gameData.CurrentTireMarkColor.a = 1.0f; //0.25f;
 
             for (int i = 0; i < gameData.DyingEnemyCount; i++)
             {
@@ -698,10 +708,10 @@ namespace Survivor
         private static bool doEnemyCircleCollision(GameData gameData, Balance balance, Span<float> collisionRadiusSqr, int enemyIdx)
         {
             bool collisionHappened = false;
-            for (int c = 0; c < balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
+            for (int c = 0; c < balance.CarBalance[gameData.CarType].CollisionCircles[gameData.CarSlideIndex].Length; c++)
             {
-                Vector2 collisionCircle = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionCircles[gameData.CarSlideIndex][c];
-                float collisionRadius = balance.CarBalance.CarBalanceData[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
+                Vector2 collisionCircle = balance.CarBalance[gameData.CarType].CollisionCircles[gameData.CarSlideIndex][c];
+                float collisionRadius = balance.CarBalance[gameData.CarType].CollisionRadius[gameData.CarSlideIndex][c];
                 Vector2 diff = gameData.EnemyPosition[enemyIdx] - collisionCircle;
                 if (diff.sqrMagnitude <= collisionRadiusSqr[c])
                 {
@@ -761,20 +771,53 @@ namespace Survivor
             gameData.CarSlideDirection = (gameData.PlayerDirection + gameData.PlayerTargetDirection) / 2.0f;
 
             float playerAngle = Vector2.Angle(Vector2.up, gameData.CarSlideDirection);
-            int slideIndex = Mathf.RoundToInt(playerAngle / balance.CarBalance.CarBalanceData[gameData.CarType].AngleDelta);
-            if (slideIndex > balance.CarBalance.CarBalanceData[gameData.CarType].NumCarFrames - 1)
-                slideIndex = balance.CarBalance.CarBalanceData[gameData.CarType].NumCarFrames - 1;
+            int slideIndex = Mathf.RoundToInt(playerAngle / balance.CarBalance[gameData.CarType].AngleDelta);
+            if (slideIndex > balance.CarBalance[gameData.CarType].NumCarFrames - 1)
+                slideIndex = balance.CarBalance[gameData.CarType].NumCarFrames - 1;
             gameData.CarSlideIndex = slideIndex;
 
-            gameData.CarVelocity += balance.CarBalance.CarBalanceData[gameData.CarType].Acceleration * dt;
-            if (gameData.CarVelocity > balance.CarBalance.CarBalanceData[gameData.CarType].Velocity)
-                gameData.CarVelocity = balance.CarBalance.CarBalanceData[gameData.CarType].Velocity;
+            gameData.CarVelocity += balance.CarBalance[gameData.CarType].Acceleration * dt;
+            if (gameData.CarVelocity > balance.CarBalance[gameData.CarType].Velocity)
+                gameData.CarVelocity = balance.CarBalance[gameData.CarType].Velocity;
 
             gameData.PlayerDelta = gameData.PlayerDirection * gameData.CarVelocity * dt * velocityMultiplier;
             moveObjectsAroundPlayer(gameData, dt);
 
+            placeTireTracks(gameData, balance);
+        }
+
+        private static void placeTireTracks(GameData gameData, Balance balance)
+        {
             for (int tireIdx = 0; tireIdx < 4; tireIdx++)
-                gameData.PrevTirePosition[tireIdx] = balance.CarBalance.CarBalanceData[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx] - gameData.PlayerDelta;
+            {
+                Vector2 currentTirePos = balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
+                currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
+                currentTirePos.x += UnityEngine.Random.value * 0.05f - 0.025f;
+                currentTirePos.y += UnityEngine.Random.value * 0.05f - 0.025f;
+
+                int index = gameData.CurrentTireTrackIndex + tireIdx * balance.MaxTireTracks;
+                gameData.TireMarkPos[index] = currentTirePos;
+                gameData.TireMarkColor[index] = gameData.CurrentTireMarkColor;
+            }
+            gameData.LastTireMarkIndex = gameData.CurrentTireTrackIndex;
+            gameData.CurrentTireTrackIndex = (gameData.CurrentTireTrackIndex + 1) % balance.MaxTireTracks;
+        }
+
+        static void updateTireTracks(GameData gameData, Balance balance, float dt)
+        {
+            for (int i = 0; i < 4 * balance.MaxTireTracks; i++)
+            {
+                // gameData.TireMarkColor[i].r *= colorFadePercent;
+                // gameData.TireMarkColor[i].g *= colorFadePercent;
+                // gameData.TireMarkColor[i].b *= colorFadePercent;
+                gameData.TireMarkColor[i].a *= 1.0f - (0.4f * dt);
+                gameData.TireMarkPos[i] -= gameData.PlayerDelta;
+            }
+
+            float cleanColor = dt * 2.0f;
+            Color colorDiff = balance.TireTrackColor - gameData.CurrentTireMarkColor;
+            gameData.CurrentTireMarkColor += colorDiff * 0.25f;
+            gameData.CurrentTireMarkColor.a = 1.0f; //0.25f;
         }
 
         static void moveObjectsAroundPlayer(GameData gameData, float dt)

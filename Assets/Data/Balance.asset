@@ -15,6 +15,9 @@ MonoBehaviour:
   MaxEnemies: 2000
   SpawnRadius: 7
   MaxPlayerWeapons: 12
+  MaxTireTracks: 500
+  TireTrack: {fileID: 77581038364359059, guid: ca0aefe03d6324826a2a2504e3ffb29f, type: 3}
+  TireTrackColor: {r: 0.08235294, g: 0.11372549, b: 0.15686275, a: 0}
   MaxAmmo: 1000
   MaxParticles: 2000
   MaxXP: 1000

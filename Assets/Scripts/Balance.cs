@@ -24,6 +24,7 @@ namespace Survivor
         public string[] SpriteName;
         public string[] DyingName;
         public float[] DyingTime;
+        public Color[] DyingColor;
         public int[] SpriteType;
         public float[] Velocity;
         public float[] Radius;
@@ -52,7 +53,7 @@ namespace Survivor
         string[] SpriteIndexToName;
     }
 
-    public struct CarBalanceData
+    public class CarBalance
     {
         public string CarName;
         public int CarHP;
@@ -63,11 +64,6 @@ namespace Survivor
         public Vector2[][] CollisionCircles;
         public float[][] CollisionRadius;
         public Vector2[][] Tires;        
-    }
-
-    public class CarBalance
-    {
-        public CarBalanceData[] CarBalanceData;
     }
 
     public struct HeroBalanceData
@@ -91,6 +87,10 @@ namespace Survivor
 
         public int MaxPlayerWeapons;
 
+        public int MaxTireTracks;
+        public string TireTrackName;
+        public Color TireTrackColor;
+
         public int MaxAmmo;
         public int MaxParticles;
 
@@ -99,7 +99,7 @@ namespace Survivor
 
         public LevelBalance[] LevelBalance;
         public HeroBalance HeroBalance = new HeroBalance();
-        public CarBalance CarBalance = new CarBalance();
+        public CarBalance[] CarBalance;
         public WeaponBalance WeaponBalance = new WeaponBalance();
         public EnemyBalance EnemyBalance = new EnemyBalance();
 
@@ -120,6 +120,10 @@ namespace Survivor
                 SpawnRadius = br.ReadSingle();
 
                 MaxPlayerWeapons = br.ReadInt32();
+
+                MaxTireTracks = br.ReadInt32();
+                TireTrackName = br.ReadString();
+                TireTrackColor = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
 
                 MaxAmmo = br.ReadInt32();
                 MaxParticles = br.ReadInt32();
@@ -163,34 +167,35 @@ namespace Survivor
                 }
 
                 int numCars = br.ReadInt32();
-                CarBalance.CarBalanceData = new CarBalanceData[numCars];
+                CarBalance = new CarBalance[numCars];
                 for (int carIdx = 0; carIdx < numCars; carIdx++)
                 {
-                    CarBalance.CarBalanceData[carIdx].CarName = br.ReadString();
-                    CarBalance.CarBalanceData[carIdx].CarHP = br.ReadInt32();
-                    CarBalance.CarBalanceData[carIdx].Velocity = br.ReadSingle();
-                    CarBalance.CarBalanceData[carIdx].Acceleration = br.ReadSingle();
+                    CarBalance[carIdx] = new CarBalance();
+                    CarBalance[carIdx].CarName = br.ReadString();
+                    CarBalance[carIdx].CarHP = br.ReadInt32();
+                    CarBalance[carIdx].Velocity = br.ReadSingle();
+                    CarBalance[carIdx].Acceleration = br.ReadSingle();
 
                     int numCarFrames = br.ReadInt32();
-                    CarBalance.CarBalanceData[carIdx].NumCarFrames = numCarFrames;
-                    CarBalance.CarBalanceData[carIdx].AngleDelta = br.ReadSingle();
-                    CarBalance.CarBalanceData[carIdx].CollisionCircles = new Vector2[numCarFrames][];
-                    CarBalance.CarBalanceData[carIdx].CollisionRadius = new float[numCarFrames][];
-                    CarBalance.CarBalanceData[carIdx].Tires = new Vector2[numCarFrames][];
+                    CarBalance[carIdx].NumCarFrames = numCarFrames;
+                    CarBalance[carIdx].AngleDelta = br.ReadSingle();
+                    CarBalance[carIdx].CollisionCircles = new Vector2[numCarFrames][];
+                    CarBalance[carIdx].CollisionRadius = new float[numCarFrames][];
+                    CarBalance[carIdx].Tires = new Vector2[numCarFrames][];
                     for (int frameIdx = 0; frameIdx < numCarFrames; frameIdx++)
                     {
                         int numCircleCollisions = br.ReadInt32();
-                        CarBalance.CarBalanceData[carIdx].CollisionCircles[frameIdx] = new Vector2[numCircleCollisions];
-                        CarBalance.CarBalanceData[carIdx].CollisionRadius[frameIdx] = new float[numCircleCollisions];
+                        CarBalance[carIdx].CollisionCircles[frameIdx] = new Vector2[numCircleCollisions];
+                        CarBalance[carIdx].CollisionRadius[frameIdx] = new float[numCircleCollisions];
                         for (int circleIdx = 0; circleIdx < numCircleCollisions; circleIdx++)
                         {
-                            CarBalance.CarBalanceData[carIdx].CollisionCircles[frameIdx][circleIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
-                            CarBalance.CarBalanceData[carIdx].CollisionRadius[frameIdx][circleIdx] = br.ReadSingle();
+                            CarBalance[carIdx].CollisionCircles[frameIdx][circleIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
+                            CarBalance[carIdx].CollisionRadius[frameIdx][circleIdx] = br.ReadSingle();
                         }
 
-                        CarBalance.CarBalanceData[carIdx].Tires[frameIdx] = new Vector2[4];
+                        CarBalance[carIdx].Tires[frameIdx] = new Vector2[4];
                         for (int tireIdx = 0; tireIdx < 4; tireIdx++)
-                            CarBalance.CarBalanceData[carIdx].Tires[frameIdx][tireIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
+                            CarBalance[carIdx].Tires[frameIdx][tireIdx] = new Vector2(br.ReadSingle(), br.ReadSingle());
                     }
                 }
 
@@ -231,6 +236,7 @@ namespace Survivor
                 EnemyBalance.SpriteType = new int[numEnemies];
                 EnemyBalance.DyingName = new string[numEnemies];
                 EnemyBalance.DyingTime = new float[numEnemies];
+                EnemyBalance.DyingColor = new Color[numEnemies];
                 EnemyBalance.Velocity = new float[numEnemies];
                 EnemyBalance.Radius = new float[numEnemies];
                 EnemyBalance.HP = new float[numEnemies];
@@ -243,6 +249,7 @@ namespace Survivor
                     EnemyBalance.SpriteType[enemyIdx] = br.ReadInt32();
                     EnemyBalance.DyingName[enemyIdx] = br.ReadString();
                     EnemyBalance.DyingTime[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.DyingColor[enemyIdx] = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                     EnemyBalance.Velocity[enemyIdx] = br.ReadSingle();
                     EnemyBalance.Radius[enemyIdx] = br.ReadSingle();
                     EnemyBalance.HP[enemyIdx] = br.ReadSingle();

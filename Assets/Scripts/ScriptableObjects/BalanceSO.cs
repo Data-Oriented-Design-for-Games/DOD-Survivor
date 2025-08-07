@@ -12,6 +12,11 @@ namespace Survivor
         [Header("Player")]
         public int MaxPlayerWeapons;
 
+        [Header("Car")]
+        public int MaxTireTracks;
+        public GameObject TireTrack;
+        public Color TireTrackColor;
+
         [Header("Weapons")]
         public int MaxAmmo;
         public int MaxParticles;
