@@ -78,7 +78,7 @@ namespace Survivor
             // particles
             m_explosionPool.Init(gameData, balance, SpriteParent);
             m_trailPool.Init(gameData, balance, SpriteParent);
-            m_tireTrackPool.Init(gameData, balance.MaxTireTracks * 4, SpriteParent, balance.TireTrackName);
+            m_tireTrackPool.Init(gameData, balance.MaxSkidMarks * 4, SpriteParent, balance.SkidMarkName);
 
             // dead enemies
             m_dyingEnemyPool.Init(gameData, balance, SpriteParent);
@@ -237,9 +237,9 @@ namespace Survivor
                 // skid marks
                 for (int tireIdx = 0; tireIdx < 4; tireIdx++)
                 {
-                    int index = tireIdx * balance.MaxTireTracks + gameData.LastTireMarkIndex;
-                    Vector2 tirePos = gameData.TireMarkPos[index];
-                    m_tireTrackPool.ShowTireTrack(tirePos, gameData.TireMarkColor[index]);
+                    int index = tireIdx * balance.MaxSkidMarks + gameData.LastSkidMarkIndex;
+                    Vector2 tirePos = gameData.SkidMarkPos[index];
+                    m_tireTrackPool.ShowTireTrack(tirePos, gameData.SkidMarkColor[index]);
                 }
             }
             else

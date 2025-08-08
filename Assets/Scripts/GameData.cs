@@ -35,11 +35,12 @@ namespace Survivor
         public bool InCar;
         public float CarVelocity;
 
-        public int CurrentTireTrackIndex;
-        public int LastTireMarkIndex;
-        public Vector2[] TireMarkPos;
-        public Color[] TireMarkColor;
-        public Color CurrentTireMarkColor;
+        // car tread mark
+        public int CurrentSkidMarkIndex;
+        public int LastSkidMarkIndex;
+        public Vector2[] SkidMarkPos;
+        public Color[] SkidMarkColor;
+        public Color CurrentSkidMarkColor;
 
         public Vector2[] AmmoPosition;
         public Vector2[] AmmoDirection;

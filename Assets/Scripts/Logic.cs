@@ -39,8 +39,8 @@ namespace Survivor
             gameData.XPUsedIdxs = new int[balance.MaxXP];
             gameData.XPUnusedIdxs = new int[balance.MaxXP];
 
-            gameData.TireMarkPos = new Vector2[4 * balance.MaxTireTracks];
-            gameData.TireMarkColor = new Color[4 * balance.MaxTireTracks];
+            gameData.SkidMarkPos = new Vector2[4 * balance.MaxSkidMarks];
+            gameData.SkidMarkColor = new Color[4 * balance.MaxSkidMarks];
         }
 
         public static void Init(MetaData metaData)
@@ -102,8 +102,8 @@ namespace Survivor
 
             gameData.StatsEnemiesKilled = 0;
 
-            gameData.CurrentTireTrackIndex = 0;
-            gameData.CurrentTireMarkColor = balance.TireTrackColor;
+            gameData.CurrentSkidMarkIndex = 0;
+            gameData.CurrentSkidMarkColor = balance.SkidMarkColor;
             
             // TEST - no way to assign them in game yet
             // gameData.PlayerWeaponType[0] = 0;
@@ -686,14 +686,14 @@ namespace Survivor
                         gameData.CarVelocity = balance.CarBalance[gameData.CarType].Velocity * 0.67f;
 
                     markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
-                    gameData.CurrentTireMarkColor = balance.EnemyBalance.DyingColor[enemyType];
+                    gameData.CurrentSkidMarkColor = balance.EnemyBalance.DyingColor[enemyType];
                 }
                 else
                     gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
             }
             gameData.AliveEnemyCount = enemyCount;
 
-            gameData.CurrentTireMarkColor.a = 1.0f; //0.25f;
+            gameData.CurrentSkidMarkColor.a = 1.0f; //0.25f;
 
             for (int i = 0; i < gameData.DyingEnemyCount; i++)
             {
@@ -795,29 +795,29 @@ namespace Survivor
                 currentTirePos.x += UnityEngine.Random.value * 0.05f - 0.025f;
                 currentTirePos.y += UnityEngine.Random.value * 0.05f - 0.025f;
 
-                int index = gameData.CurrentTireTrackIndex + tireIdx * balance.MaxTireTracks;
-                gameData.TireMarkPos[index] = currentTirePos;
-                gameData.TireMarkColor[index] = gameData.CurrentTireMarkColor;
+                int index = gameData.CurrentSkidMarkIndex + tireIdx * balance.MaxSkidMarks;
+                gameData.SkidMarkPos[index] = currentTirePos;
+                gameData.SkidMarkColor[index] = gameData.CurrentSkidMarkColor;
             }
-            gameData.LastTireMarkIndex = gameData.CurrentTireTrackIndex;
-            gameData.CurrentTireTrackIndex = (gameData.CurrentTireTrackIndex + 1) % balance.MaxTireTracks;
+            gameData.LastSkidMarkIndex = gameData.CurrentSkidMarkIndex;
+            gameData.CurrentSkidMarkIndex = (gameData.CurrentSkidMarkIndex + 1) % balance.MaxSkidMarks;
         }
 
         static void updateTireTracks(GameData gameData, Balance balance, float dt)
         {
-            for (int i = 0; i < 4 * balance.MaxTireTracks; i++)
+            for (int i = 0; i < 4 * balance.MaxSkidMarks; i++)
             {
                 // gameData.TireMarkColor[i].r *= colorFadePercent;
                 // gameData.TireMarkColor[i].g *= colorFadePercent;
                 // gameData.TireMarkColor[i].b *= colorFadePercent;
-                gameData.TireMarkColor[i].a *= 1.0f - (0.4f * dt);
-                gameData.TireMarkPos[i] -= gameData.PlayerDelta;
+                gameData.SkidMarkColor[i].a *= 1.0f - (0.4f * dt);
+                gameData.SkidMarkPos[i] -= gameData.PlayerDelta;
             }
 
             float cleanColor = dt * 2.0f;
-            Color colorDiff = balance.TireTrackColor - gameData.CurrentTireMarkColor;
-            gameData.CurrentTireMarkColor += colorDiff * 0.25f;
-            gameData.CurrentTireMarkColor.a = 1.0f; //0.25f;
+            Color colorDiff = balance.SkidMarkColor - gameData.CurrentSkidMarkColor;
+            gameData.CurrentSkidMarkColor += colorDiff * 0.25f;
+            gameData.CurrentSkidMarkColor.a = 1.0f; //0.25f;
         }
 
         static void moveObjectsAroundPlayer(GameData gameData, float dt)

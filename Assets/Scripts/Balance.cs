@@ -87,9 +87,9 @@ namespace Survivor
 
         public int MaxPlayerWeapons;
 
-        public int MaxTireTracks;
-        public string TireTrackName;
-        public Color TireTrackColor;
+        public int MaxSkidMarks;
+        public string SkidMarkName;
+        public Color SkidMarkColor;
 
         public int MaxAmmo;
         public int MaxParticles;
@@ -121,9 +121,9 @@ namespace Survivor
 
                 MaxPlayerWeapons = br.ReadInt32();
 
-                MaxTireTracks = br.ReadInt32();
-                TireTrackName = br.ReadString();
-                TireTrackColor = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                MaxSkidMarks = br.ReadInt32();
+                SkidMarkName = br.ReadString();
+                SkidMarkColor = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
 
                 MaxAmmo = br.ReadInt32();
                 MaxParticles = br.ReadInt32();

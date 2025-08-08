@@ -60,8 +60,8 @@ namespace Survivor
         {
             for (int i = 0; i < m_maxCount; i++)
             {
-                m_poolGO[i].transform.localPosition = gameData.TireMarkPos[i];
-                m_poolSR[i].color = gameData.TireMarkColor[i];
+                m_poolGO[i].transform.localPosition = gameData.SkidMarkPos[i];
+                m_poolSR[i].color = gameData.SkidMarkColor[i];
             }
         }
     }

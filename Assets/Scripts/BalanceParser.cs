@@ -81,11 +81,11 @@ namespace Survivor
 
                     bw.Write(balanceSO.MaxPlayerWeapons);
 
-                    bw.Write(balanceSO.MaxTireTracks);
-                    bw.Write(balanceSO.TireTrack.name);
-                    bw.Write(balanceSO.TireTrackColor.r);
-                    bw.Write(balanceSO.TireTrackColor.g);
-                    bw.Write(balanceSO.TireTrackColor.b);
+                    bw.Write(balanceSO.MaxSkidMarks);
+                    bw.Write(balanceSO.SkidMark.name);
+                    bw.Write(balanceSO.SkidMarkColor.r);
+                    bw.Write(balanceSO.SkidMarkColor.g);
+                    bw.Write(balanceSO.SkidMarkColor.b);
 
                     bw.Write(balanceSO.MaxAmmo);
                     bw.Write(balanceSO.MaxParticles);
