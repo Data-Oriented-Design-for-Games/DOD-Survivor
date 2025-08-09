@@ -12,7 +12,6 @@ namespace Survivor
         SpriteRenderer[] m_poolSR;
         float[] m_poolAlpha;
         Color[] m_poolColor;
-        int m_index;
 
         Transform spriteParent;
 
@@ -27,13 +26,13 @@ namespace Survivor
             m_poolColor = new Color[maxCount];
             for (int i = 0; i < maxCount; i++)
             {
-                m_poolGO[i] = AssetManager.Instance.GetTireMark(tireMarkName, spriteParent);
+                m_poolGO[i] = AssetManager.Instance.GetSkidMark(tireMarkName, spriteParent);
+                m_poolGO[i].name = "SkidMark " + i.ToString();
                 m_poolSR[i] = m_poolGO[i].GetComponentInChildren<SpriteRenderer>();
             }
 
             Clear();
 
-            m_index = 0;
             this.gameData = gameData;
             this.spriteParent = spriteParent;
         }
@@ -44,16 +43,19 @@ namespace Survivor
             {
                 m_poolAlpha[i] = 0.0f;
                 m_poolColor[i] = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-                m_poolSR[i].color = m_poolColor[m_index];
+                m_poolSR[i].color = m_poolColor[i];
             }
         }
 
-        public void ShowTireTrack(Vector2 position, Color color)
+        public void ShowSkidMark(Vector2 position, Color color, float angle, int index)
         {
-            m_poolGO[m_index].transform.localPosition = position;
-            m_poolColor[m_index] = color;
-            m_poolSR[m_index].color = m_poolColor[m_index];
-            m_index = (m_index + 1) % m_maxCount;
+            // Debug.Log("ShowSkidMark " + m_poolGO[index].name + " angle " + angle);
+
+            m_poolGO[index].transform.localPosition = position;
+            m_poolColor[index] = color;
+            m_poolSR[index].color = m_poolColor[index];
+
+            m_poolGO[index].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, angle);
         }
 
         public void Tick()

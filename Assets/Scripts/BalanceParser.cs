@@ -86,6 +86,7 @@ namespace Survivor
                     bw.Write(balanceSO.SkidMarkColor.r);
                     bw.Write(balanceSO.SkidMarkColor.g);
                     bw.Write(balanceSO.SkidMarkColor.b);
+                    bw.Write(balanceSO.SkidMarkColor.a);
 
                     bw.Write(balanceSO.MaxAmmo);
                     bw.Write(balanceSO.MaxParticles);

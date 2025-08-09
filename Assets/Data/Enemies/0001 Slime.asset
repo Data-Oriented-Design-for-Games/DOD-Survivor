@@ -15,7 +15,7 @@ MonoBehaviour:
   ID: 1
   WalkingAnimation: {fileID: 2847892865747687350, guid: 6096dab9120e94ceb9a5a174dbdbc091, type: 3}
   DeathAnimation: {fileID: 2847892865747687350, guid: 535dc87c87f664a9d98355ef0e6a5761, type: 3}
-  DyingColor: {r: 0.27450982, g: 0.50980395, b: 0.19607843, a: 0}
+  DyingColor: {r: 0.65882355, g: 0.7921569, b: 0.34509805, a: 1}
   Velocity: 0.1
   Radius: 0.1
   HP: 10

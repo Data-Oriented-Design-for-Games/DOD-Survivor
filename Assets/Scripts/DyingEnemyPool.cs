@@ -38,7 +38,7 @@ namespace Survivor
             PoolIndexToEnemyIndex[poolIndex] = enemyIndex;
             EnemyIndexToPoolIndex[enemyIndex] = poolIndex;
 
-            Debug.Log("ShowDyingEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
+            // Debug.Log("ShowDyingEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
 
             CommonPool.ShowPoolItem(m_poolData, position, 0.0f, poolIndex);
         }
@@ -48,7 +48,7 @@ namespace Survivor
 
             int poolIndex = EnemyIndexToPoolIndex[enemyIndex];
 
-            Debug.Log("HideDyingEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
+            // Debug.Log("HideDyingEnemy enemyIndex " + enemyIndex + " poolIndex " + poolIndex);
 
             CommonPool.HidePoolItem(m_poolData, poolIndex);
         }

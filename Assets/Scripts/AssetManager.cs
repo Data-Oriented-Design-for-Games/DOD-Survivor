@@ -89,9 +89,9 @@ namespace Survivor
             return Instantiate(loadGameObject(m_commonBundle, enemyName, "Assets/Prefabs/Common/Enemies" + enemyName + ".prefab"), parent).GetComponent<EnemySprite>();
         }
 
-        public GameObject GetTireMark(string tireMarkName, Transform parent)
+        public GameObject GetSkidMark(string skidMarkName, Transform parent)
         {
-            return Instantiate(loadGameObject(m_commonBundle, tireMarkName, "Assets/Prefabs/Common/" + tireMarkName + ".prefab"), parent);
+            return Instantiate(loadGameObject(m_commonBundle, skidMarkName, "Assets/Prefabs/Common/" + skidMarkName + ".prefab"), parent);
         }
 
         public GameObject GetInGameUI()

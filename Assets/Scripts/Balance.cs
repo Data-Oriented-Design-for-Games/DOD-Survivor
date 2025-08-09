@@ -123,7 +123,7 @@ namespace Survivor
 
                 MaxSkidMarks = br.ReadInt32();
                 SkidMarkName = br.ReadString();
-                SkidMarkColor = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                SkidMarkColor = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
 
                 MaxAmmo = br.ReadInt32();
                 MaxParticles = br.ReadInt32();

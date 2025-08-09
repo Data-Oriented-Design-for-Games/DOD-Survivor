@@ -235,11 +235,11 @@ namespace Survivor
                 m_car.UpdateFrame(m_playerAnimationData);
 
                 // skid marks
+                float skidMarkAngle = gameData.SkidMarkAngle[gameData.LastSkidMarkIndex];
                 for (int tireIdx = 0; tireIdx < 4; tireIdx++)
                 {
                     int index = tireIdx * balance.MaxSkidMarks + gameData.LastSkidMarkIndex;
-                    Vector2 tirePos = gameData.SkidMarkPos[index];
-                    m_tireTrackPool.ShowTireTrack(tirePos, gameData.SkidMarkColor[index]);
+                    m_tireTrackPool.ShowSkidMark(gameData.SkidMarkPos[index], gameData.SkidMarkColor[index], skidMarkAngle, index);
                 }
             }
             else
@@ -324,9 +324,7 @@ namespace Survivor
             m_xpPool.Tick(dt);
             m_tireTrackPool.Tick();
 
-            // ui
-            for (int i = 0; i < balance.MaxEnemies; i++)
-                m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
+            m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
 
             string statsText = "Enemies alive " + gameData.AliveEnemyCount.ToString("N0") + "\n";
             statsText += "Enemies dying " + gameData.DyingEnemyCount.ToString("N0") + "\n";

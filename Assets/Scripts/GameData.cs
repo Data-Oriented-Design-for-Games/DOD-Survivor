@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.IO;
 
 namespace Survivor
 {
@@ -39,8 +38,9 @@ namespace Survivor
         public int CurrentSkidMarkIndex;
         public int LastSkidMarkIndex;
         public Vector2[] SkidMarkPos;
+        public float[] SkidMarkAngle;
         public Color[] SkidMarkColor;
-        public Color CurrentSkidMarkColor;
+        public Color[] CurrentSkidMarkColor;
 
         public Vector2[] AmmoPosition;
         public Vector2[] AmmoDirection;

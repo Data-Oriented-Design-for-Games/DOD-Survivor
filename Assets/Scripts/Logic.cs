@@ -40,7 +40,9 @@ namespace Survivor
             gameData.XPUnusedIdxs = new int[balance.MaxXP];
 
             gameData.SkidMarkPos = new Vector2[4 * balance.MaxSkidMarks];
+            gameData.SkidMarkAngle = new float[balance.MaxSkidMarks];
             gameData.SkidMarkColor = new Color[4 * balance.MaxSkidMarks];
+            gameData.CurrentSkidMarkColor = new Color[4];
         }
 
         public static void Init(MetaData metaData)
@@ -103,8 +105,9 @@ namespace Survivor
             gameData.StatsEnemiesKilled = 0;
 
             gameData.CurrentSkidMarkIndex = 0;
-            gameData.CurrentSkidMarkColor = balance.SkidMarkColor;
-            
+            for (int i = 0; i < 4; i++)
+                gameData.CurrentSkidMarkColor[i] = balance.SkidMarkColor;
+
             // TEST - no way to assign them in game yet
             // gameData.PlayerWeaponType[0] = 0;
             // gameData.PlayerWeaponType[1] = 1;
@@ -276,6 +279,9 @@ namespace Survivor
             xpPlacedCount = 0;
             xpPickedUpCount = 0;
 
+            if (gameData.InCar)
+                updateTireTracks(gameData, balance, dt);
+
             // Weapon
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
@@ -307,7 +313,7 @@ namespace Survivor
             // player
             if (gameData.InCar)
             {
-                updateTireTracks(gameData, balance, dt);
+                // updateTireTracks(gameData, balance, dt);
                 moveCar(gameData, balance, dt);
             }
             else
@@ -686,14 +692,30 @@ namespace Survivor
                         gameData.CarVelocity = balance.CarBalance[gameData.CarType].Velocity * 0.67f;
 
                     markEnemyDyingCheckForDuplicate(gameData, balance, enemyIdx, dyingEnemyIdxs, ref dyingEnemyCount);
-                    gameData.CurrentSkidMarkColor = balance.EnemyBalance.DyingColor[enemyType];
+
+                    int closestTireIdx = 0;
+                    float closestDistanceSqr = (gameData.EnemyPosition[enemyIdx] - balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][0]).sqrMagnitude;
+                    for (int tireIdx = 1; tireIdx < 4; tireIdx++)
+                    {
+                        float distanceSqr = (gameData.EnemyPosition[enemyIdx] - balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx]).sqrMagnitude;
+                        if (distanceSqr < closestDistanceSqr)
+                        {
+                            closestTireIdx = tireIdx;
+                            closestDistanceSqr = distanceSqr;
+                        }
+                    }
+                    gameData.CurrentSkidMarkColor[closestTireIdx] = balance.EnemyBalance.DyingColor[enemyType];
+
+                    float offsetAngle = UnityEngine.Random.value * 10.0f - 5.0f;
+                    gameData.PlayerDirection = RotateVector(gameData.PlayerDirection, offsetAngle);
                 }
                 else
                     gameData.AliveEnemyIdxs[enemyCount++] = enemyIdx;
             }
             gameData.AliveEnemyCount = enemyCount;
 
-            gameData.CurrentSkidMarkColor.a = 1.0f; //0.25f;
+            // for (int i = 0; i < 4; i++)
+            //     gameData.CurrentSkidMarkColor[i].a = 1.0f; //0.25f;
 
             for (int i = 0; i < gameData.DyingEnemyCount; i++)
             {
@@ -761,14 +783,18 @@ namespace Survivor
 
                 lerpVector = Vector2.Lerp(gameData.PlayerDirection, gameData.PlayerTargetDirection, t);
                 // velocityMultiplier = lerpVector.magnitude;
-                Debug.Log("moveCar()");
-                Debug.Log("gameData.PlayerDirection " + gameData.PlayerDirection + " gameData.PlayerTargetDirection " + gameData.PlayerTargetDirection + " t " + t);
-                Debug.Log("angleVelocity " + angleVelocity + " angle " + angle + " t " + t);
-                Debug.Log("lerpVector " + lerpVector.ToString() + " t " + t + " velocityMultiplier " + velocityMultiplier + " lerpVector.normalized " + lerpVector.normalized.ToString());
+                // Debug.Log("moveCar()");
+                // Debug.Log("gameData.PlayerDirection " + gameData.PlayerDirection + " gameData.PlayerTargetDirection " + gameData.PlayerTargetDirection + " t " + t);
+                // Debug.Log("angleVelocity " + angleVelocity + " angle " + angle + " t " + t);
+                // Debug.Log("lerpVector " + lerpVector.ToString() + " t " + t + " velocityMultiplier " + velocityMultiplier + " lerpVector.normalized " + lerpVector.normalized.ToString());
             }
 
             gameData.PlayerDirection = lerpVector.normalized;
             gameData.CarSlideDirection = (gameData.PlayerDirection + gameData.PlayerTargetDirection) / 2.0f;
+
+            if ((gameData.CarSlideDirection - gameData.PlayerDirection).sqrMagnitude > 0.1f)
+                for (int tireIdx = 0; tireIdx < 4; tireIdx++)
+                    gameData.CurrentSkidMarkColor[tireIdx].a = 1.0f;
 
             float playerAngle = Vector2.Angle(Vector2.up, gameData.CarSlideDirection);
             int slideIndex = Mathf.RoundToInt(playerAngle / balance.CarBalance[gameData.CarType].AngleDelta);
@@ -783,22 +809,24 @@ namespace Survivor
             gameData.PlayerDelta = gameData.PlayerDirection * gameData.CarVelocity * dt * velocityMultiplier;
             moveObjectsAroundPlayer(gameData, dt);
 
-            placeTireTracks(gameData, balance);
+            placeSkidMark(gameData, balance);
         }
 
-        private static void placeTireTracks(GameData gameData, Balance balance)
+        private static void placeSkidMark(GameData gameData, Balance balance)
         {
             for (int tireIdx = 0; tireIdx < 4; tireIdx++)
             {
                 Vector2 currentTirePos = balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
                 currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
-                currentTirePos.x += UnityEngine.Random.value * 0.05f - 0.025f;
-                currentTirePos.y += UnityEngine.Random.value * 0.05f - 0.025f;
+                // currentTirePos.x += UnityEngine.Random.value * 0.05f - 0.025f;
+                // currentTirePos.y += UnityEngine.Random.value * 0.05f - 0.025f;
 
                 int index = gameData.CurrentSkidMarkIndex + tireIdx * balance.MaxSkidMarks;
                 gameData.SkidMarkPos[index] = currentTirePos;
-                gameData.SkidMarkColor[index] = gameData.CurrentSkidMarkColor;
+                gameData.SkidMarkColor[index] = gameData.CurrentSkidMarkColor[tireIdx];
             }
+            gameData.SkidMarkAngle[gameData.CurrentSkidMarkIndex] = Vector2.SignedAngle(Vector2.up, gameData.CarSlideDirection);
+
             gameData.LastSkidMarkIndex = gameData.CurrentSkidMarkIndex;
             gameData.CurrentSkidMarkIndex = (gameData.CurrentSkidMarkIndex + 1) % balance.MaxSkidMarks;
         }
@@ -807,17 +835,15 @@ namespace Survivor
         {
             for (int i = 0; i < 4 * balance.MaxSkidMarks; i++)
             {
-                // gameData.TireMarkColor[i].r *= colorFadePercent;
-                // gameData.TireMarkColor[i].g *= colorFadePercent;
-                // gameData.TireMarkColor[i].b *= colorFadePercent;
-                gameData.SkidMarkColor[i].a *= 1.0f - (0.4f * dt);
+                gameData.SkidMarkColor[i].a *= 1.0f - ((0.2f * dt) * (0.2f * dt));
                 gameData.SkidMarkPos[i] -= gameData.PlayerDelta;
             }
 
-            float cleanColor = dt * 2.0f;
-            Color colorDiff = balance.SkidMarkColor - gameData.CurrentSkidMarkColor;
-            gameData.CurrentSkidMarkColor += colorDiff * 0.25f;
-            gameData.CurrentSkidMarkColor.a = 1.0f; //0.25f;
+            for (int i = 0; i < 4; i++)
+            {
+                Color colorDiff = balance.SkidMarkColor - gameData.CurrentSkidMarkColor[i];
+                gameData.CurrentSkidMarkColor[i] += colorDiff * 0.25f;
+            }
         }
 
         static void moveObjectsAroundPlayer(GameData gameData, float dt)
