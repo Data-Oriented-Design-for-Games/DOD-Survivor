@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3e1468910125442ab9b26a66062ed477
+guid: d93c977df0a3942979599593aef137f1
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -123,13 +123,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Zombie Walk Animation_0
+      name: Bat Walk Animation_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 67
+        height: 62
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +137,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: aa63a2cc7e9114983b6e08bbec0518e5
-      internalID: 1104216516
+      spriteID: bccfd08cb610b463984147dc8e41a0e6
+      internalID: -436327599
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Zombie Walk Animation_1
+      name: Bat Walk Animation_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 67
         y: 0
-        width: 32
-        height: 32
+        width: 67
+        height: 62
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -158,20 +158,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a9dc0fe37ab514f0b8218d318fa0e13e
-      internalID: 22929482
+      spriteID: 7b5704e3208a94398821bcfab77d87f0
+      internalID: 1532687586
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Zombie Walk Animation_2
+      name: Bat Walk Animation_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 134
         y: 0
-        width: 32
-        height: 32
+        width: 67
+        height: 62
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -179,20 +179,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1a9395b0ce47940c782b02d2a4b2d5b5
-      internalID: -1494205048
+      spriteID: 193310649dc574ef69914a63e99319a2
+      internalID: 1580207780
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Zombie Walk Animation_3
+      name: Bat Walk Animation_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 201
         y: 0
-        width: 32
-        height: 32
+        width: 67
+        height: 62
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -200,8 +200,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7cb3e97edbc544e2da7c98d604c0f588
-      internalID: 1143125415
+      spriteID: 67a5130e01ee64ea390398b2ab03a0a5
+      internalID: 1065697787
       vertices: []
       indices: 
       edges: []
@@ -217,10 +217,10 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Zombie Walk Animation_0: 1104216516
-      Zombie Walk Animation_1: 22929482
-      Zombie Walk Animation_2: -1494205048
-      Zombie Walk Animation_3: 1143125415
+      Bat Walk Animation_0: -436327599
+      Bat Walk Animation_1: 1532687586
+      Bat Walk Animation_2: 1580207780
+      Bat Walk Animation_3: 1065697787
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

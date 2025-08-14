@@ -22,6 +22,9 @@ namespace Survivor
             gameData.DyingEnemyIdxs = new int[balance.MaxEnemies];
             gameData.DyingEnemyTimer = new float[balance.MaxEnemies];
 
+            gameData.EnemyMapIdxs = new int[balance.MaxEnemiesPerMapSquare * Mathf.FloorToInt(balance.BoundsRadius * 2) * Mathf.FloorToInt(balance.BoundsRadius * 2)];
+            gameData.EnemyMapCount = new int[Mathf.FloorToInt(balance.BoundsRadius * 2) * Mathf.FloorToInt(balance.BoundsRadius * 2)];
+
             gameData.AmmoPosition = new Vector2[balance.MaxAmmo];
             gameData.AmmoDirection = new Vector2[balance.MaxAmmo];
             gameData.AmmoType = new int[balance.MaxAmmo];
@@ -131,6 +134,76 @@ namespace Survivor
             gameData.EnemyPushValue[enemyIndex] = 0.0f;
 
             return enemyIndex;
+        }
+
+        static int getMapIndex(Balance balance, Vector2 position)
+        {
+            int mapSize = Mathf.FloorToInt(balance.BoundsRadius * 2);
+            int x = Mathf.FloorToInt(position.x + balance.BoundsRadius);
+            int y = Mathf.FloorToInt(position.y + balance.BoundsRadius);
+            if (x < 0)
+                x = 0;
+            if (y < 0)
+                y = 0;
+            if (x > mapSize - 1)
+                x = mapSize - 1;
+            if (y > mapSize - 1)
+                y = mapSize - 1;
+            int mapIndex = y * mapSize + x;
+            return mapIndex;
+        }
+
+        static void addEnemyToMap(GameData gameData, Balance balance, int mapIndex, int enemyIndex)
+        {
+            int mapEnemyIndex = mapIndex * balance.MaxEnemiesPerMapSquare + gameData.EnemyMapCount[mapIndex];
+
+            // for (int i = mapIndex * balance.MaxEnemies; i < mapIndex * balance.MaxEnemies + gameData.EnemyMapCount[mapIndex]; i++)
+            {
+                // check for duplicates
+            }
+
+            gameData.EnemyMapIdxs[mapEnemyIndex] = enemyIndex;
+            gameData.EnemyMapCount[mapIndex]++;
+        }
+
+        public static void AddAllEnemiesToMap(GameData gameData, Balance balance)
+        {
+            // int count = 0;
+            ClearMap(gameData);
+            for (int i = 0; i < gameData.AliveEnemyCount; i++)
+            {
+                int enemyIndex = gameData.AliveEnemyIdxs[i];
+                Vector2 enemyPos = gameData.EnemyPosition[enemyIndex];
+                int mapIndex = getMapIndex(balance, enemyPos);
+                addEnemyToMap(gameData, balance, mapIndex, enemyIndex);
+                /*
+                                // check bounds
+                                float enemyRadius = balance.EnemyBalance.Radius[gameData.EnemyType[enemyIndex]];
+                                for (int x = -1; x < 2; x++)
+                                {
+                                    for (int y = -1; y < 2; y++)
+                                    {
+                                        if (x != 0 && y != 0)
+                                        {
+                                            Vector2 pos = new Vector2(enemyPos.x + x * enemyRadius, enemyPos.y + y * enemyRadius);
+                                            int newMapIndex = getMapIndex(balance, pos);
+                                            if (newMapIndex != mapIndex)
+                                            {
+                                                count++;
+                                                // addEnemyToMap(gameData, balance, newMapIndex, enemyIndex);
+                                            }
+                                        }
+                                    }
+                                }
+                                */
+            }
+            // Debug.Log("Enemies on edge " + count);
+        }
+
+        public static void ClearMap(GameData gameData)
+        {
+            for (int i = 0; i < gameData.EnemyMapCount.Length; i++)
+                gameData.EnemyMapCount[i] = 0;
         }
 
         private const double DegToRad = Math.PI / 180.0d;
@@ -306,14 +379,15 @@ namespace Survivor
 
             checkDyingEnemyOutOfBounds(gameData, balance);
 
-            doEnemyToEnemyCollision(gameData, balance);
+            // doEnemyToEnemyCollision(gameData, balance);
+            doEnemyToEnemyCollisionMap(gameData, balance);
 
-            doCarEnemyCollision(metaData, gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount);
 
             // player
             if (gameData.InCar)
             {
                 // updateTireTracks(gameData, balance, dt);
+                doCarEnemyCollision(metaData, gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount);
                 moveCar(gameData, balance, dt);
             }
             else
@@ -635,14 +709,58 @@ namespace Survivor
             }
         }
 
+        static void doEnemyToEnemyCollisionMap(GameData gameData, Balance balance)
+        {
+            int mapSize = Mathf.FloorToInt(balance.BoundsRadius * 2);
+
+            AddAllEnemiesToMap(gameData, balance);
+            for (int mapIndex = 0; mapIndex < gameData.EnemyMapCount.Length; mapIndex++)
+            {
+                for (int i = 0; i < gameData.EnemyMapCount[mapIndex]; i++)
+                {
+                    int enemyIdx1 = gameData.EnemyMapIdxs[mapIndex * balance.MaxEnemiesPerMapSquare + i];
+
+                    int x = mapIndex % mapSize;
+                    int y = mapIndex / mapSize;
+
+                    for (int diffX = -1; diffX < 2; diffX++)
+                    {
+                        for (int diffY = -1; diffY < 2; diffY++)
+                        {
+                            if ((x + diffX >= 0 && x + diffX < mapSize) &&
+                            (y + diffY >= 0 && y + diffY < mapSize))
+                            {
+                                int mapIndex2 = (y + diffY) * mapSize + (x + diffX);
+                                for (int j = i + 1; j < gameData.EnemyMapCount[mapIndex2]; j++)
+                                {
+                                    int enemyIdx2 = gameData.EnemyMapIdxs[mapIndex2 * balance.MaxEnemiesPerMapSquare + j];
+
+                                    float diameter = balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]] + balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
+                                    float diameterSqr = diameter * diameter;
+
+                                    Vector2 diff = gameData.EnemyPosition[enemyIdx1] - gameData.EnemyPosition[enemyIdx2];
+                                    if (diff.sqrMagnitude <= diameterSqr)
+                                    {
+                                        Vector2 diffNormalized = diff.normalized;
+                                        Vector2 midPoint = (gameData.EnemyPosition[enemyIdx1] + gameData.EnemyPosition[enemyIdx2]) / 2.0f;
+                                        gameData.EnemyPosition[enemyIdx1] = midPoint + diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]];
+                                        gameData.EnemyPosition[enemyIdx2] = midPoint - diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         static void checkEnemyOutOfBounds(GameData gameData, Balance balance, Span<int> deadEnemyIdxs, ref int deadEnemyCount)
         {
-            float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
             int count = 0;
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIdx = gameData.AliveEnemyIdxs[i];
-                if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > distanceSqr)
+                if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > balance.BoundsRadiusSqr)
                 {
                     if (!tryRespawnEnemy(gameData, balance, enemyIdx))
                         markEnemyDead(gameData, balance, enemyIdx, deadEnemyIdxs, ref deadEnemyCount);
@@ -657,11 +775,10 @@ namespace Survivor
 
         static void checkDyingEnemyOutOfBounds(GameData gameData, Balance balance)
         {
-            float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
             for (int deIdx = 0; deIdx < gameData.DyingEnemyCount; deIdx++)
             {
                 int enemyIdx = gameData.DyingEnemyIdxs[deIdx];
-                if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > distanceSqr)
+                if (gameData.EnemyPosition[enemyIdx].sqrMagnitude > balance.BoundsRadiusSqr)
                     gameData.DyingEnemyTimer[deIdx] = 0.0f;
             }
         }
@@ -695,7 +812,7 @@ namespace Survivor
 
                     int closestTireIdx = 0;
                     float closestDistanceSqr = (gameData.EnemyPosition[enemyIdx] - balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][0]).sqrMagnitude;
-                    for (int tireIdx = 1; tireIdx < 4; tireIdx++)
+                    for (int tireIdx = 2; tireIdx < 4; tireIdx++)
                     {
                         float distanceSqr = (gameData.EnemyPosition[enemyIdx] - balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx]).sqrMagnitude;
                         if (distanceSqr < closestDistanceSqr)
@@ -1007,12 +1124,11 @@ namespace Survivor
 
         static void checkAmmoOutOfBounds(GameData gameData, Balance balance, Span<int> deadAmmoIdxs, ref int deadAmmoCount)
         {
-            float distanceSqr = balance.SpawnRadius * balance.SpawnRadius * 1.1f;
             int ammoCount = 0;
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
-                if (gameData.AmmoPosition[ammoIndex].sqrMagnitude > distanceSqr)
+                if (gameData.AmmoPosition[ammoIndex].sqrMagnitude > balance.BoundsRadiusSqr)
                 {
                     deadAmmoIdxs[deadAmmoCount++] = ammoIndex;
                     gameData.DeadAmmoIdx[gameData.DeadAmmoCount++] = ammoIndex;

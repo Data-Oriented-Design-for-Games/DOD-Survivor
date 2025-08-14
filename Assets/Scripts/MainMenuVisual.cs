@@ -34,6 +34,8 @@ namespace Survivor
             guiRef.GetButton("Start").onClick.AddListener(Game.Instance.StartGame);
             m_mainMenuGUI.ContinueButton = guiRef.GetButton("Continue");
             m_mainMenuGUI.ContinueButton.onClick.AddListener(Game.Instance.ContinueGame);
+
+            guiRef.GetButton("RunTest").onClick.AddListener(Game.Instance.RunTest);
         }
 
         public void Show()

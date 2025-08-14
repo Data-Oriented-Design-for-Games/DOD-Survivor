@@ -77,7 +77,9 @@ namespace Survivor
                     BalanceSO balanceSO = (BalanceSO)AssetDatabase.LoadAssetAtPath("Assets/Data/Balance.asset", typeof(BalanceSO));
 
                     bw.Write(balanceSO.MaxEnemies);
+                    bw.Write(balanceSO.MaxEnemiesPerMapSquare);
                     bw.Write(balanceSO.SpawnRadius);
+                    bw.Write(balanceSO.BoundsRadius);
 
                     bw.Write(balanceSO.MaxPlayerWeapons);
 

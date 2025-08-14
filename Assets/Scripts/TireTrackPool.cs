@@ -13,11 +13,11 @@ namespace Survivor
         float[] m_poolAlpha;
         Color[] m_poolColor;
 
-        Transform spriteParent;
-
         GameData gameData;
 
-        public void Init(GameData gameData, int maxCount, Transform spriteParent, string tireMarkName)
+        int m_arrayOffset;
+
+        public void Init(GameData gameData, int maxCount, Transform spriteParent, string tireMarkName, int arrayOffset)
         {
             m_maxCount = maxCount;
             m_poolGO = new GameObject[maxCount];
@@ -31,10 +31,11 @@ namespace Survivor
                 m_poolSR[i] = m_poolGO[i].GetComponentInChildren<SpriteRenderer>();
             }
 
+            m_arrayOffset = arrayOffset;
+
             Clear();
 
             this.gameData = gameData;
-            this.spriteParent = spriteParent;
         }
 
         public void Clear()
@@ -62,8 +63,8 @@ namespace Survivor
         {
             for (int i = 0; i < m_maxCount; i++)
             {
-                m_poolGO[i].transform.localPosition = gameData.SkidMarkPos[i];
-                m_poolSR[i].color = gameData.SkidMarkColor[i];
+                m_poolGO[i].transform.localPosition = gameData.SkidMarkPos[m_arrayOffset + i];
+                m_poolSR[i].color = gameData.SkidMarkColor[m_arrayOffset + i];
             }
         }
     }

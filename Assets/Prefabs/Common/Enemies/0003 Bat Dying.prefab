@@ -73,15 +73,15 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1104216516, guid: 3e1468910125442ab9b26a66062ed477, type: 3}
+  m_Sprite: {fileID: -436327599, guid: d93c977df0a3942979599593aef137f1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 4.1875, y: 3.875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &7772979827908344955
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 5455207726926211683}
   - component: {fileID: 2847892865747687350}
   m_Layer: 0
-  m_Name: 0002 Zombie Dying
+  m_Name: 0003 Bat Dying
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,12 +131,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 6499914139954733295}
   Sprites:
-  - {fileID: -1683620675, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: 388246683, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: -97844213, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: 296851609, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: -1573851299, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: 1328860825, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: 491634532, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: -1747903921, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
+  - {fileID: -436327599, guid: d93c977df0a3942979599593aef137f1, type: 3}
+  - {fileID: 1532687586, guid: d93c977df0a3942979599593aef137f1, type: 3}
+  - {fileID: 1580207780, guid: d93c977df0a3942979599593aef137f1, type: 3}
+  - {fileID: 1065697787, guid: d93c977df0a3942979599593aef137f1, type: 3}
+  - {fileID: -1989079895, guid: 3643927ea36984f40b914a36d128f198, type: 3}
+  - {fileID: -1458659803, guid: 3643927ea36984f40b914a36d128f198, type: 3}
+  - {fileID: -1460918957, guid: 3643927ea36984f40b914a36d128f198, type: 3}
+  - {fileID: -1900513991, guid: 3643927ea36984f40b914a36d128f198, type: 3}
   FrameTime: 0.1

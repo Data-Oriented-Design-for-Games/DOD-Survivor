@@ -22,6 +22,8 @@ namespace Survivor
         public int DyingEnemyCount;
         public int[] DeadEnemyIdxs;
         public int DeadEnemyCount;
+        public int[] EnemyMapIdxs;
+        public int[] EnemyMapCount;
 
         public Vector2 PlayerDirection;
         public Vector2 PlayerDelta;

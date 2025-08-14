@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 314890049
+CRC: 440829259
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 80b7eeb7cf1d0f176d8b3051cf119dc2
+    Hash: 11fe17c7d7b970602519d4eb1b7af7c4
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1befd3063f3f6fa0d080863d1b07d7a1
+    Hash: a06510a0fcc60499163712de8dc3bf49
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 80b7eeb7cf1d0f176d8b3051cf119dc2
+    Hash: 11fe17c7d7b970602519d4eb1b7af7c4
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -23,6 +23,12 @@ ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 - Class: 114
+  Script: {fileID: 11500000, guid: 29e84c7619565465e8c3ce6144da978b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 79a6cde457eba454ba34826a6434d37b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1bc34b8fbd3cc4b2fbbe2b149fcb4ab9, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 7cfa74e594eac400799de3341dd0416b, type: 3}
 - Class: 115
   Script: {instanceID: 0}
@@ -32,12 +38,21 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/Prefabs/Common/Players/0000 Mage.prefab
 - Assets/Prefabs/Common/Particles/0001 Fireball Trail.prefab
-- Assets/Prefabs/Common/Enemies/0000 Skeleton.prefab
+- Assets/Prefabs/Common/Enemies/0002 Zombie Dying.prefab
+- Assets/Prefabs/Common/Enemies/0000 Skeleton Walking.prefab
 - Assets/Prefabs/Common/Particles/0001 Fireball Explosion.prefab
+- Assets/Prefabs/Common/Particles/0002 Car Tire Mark.prefab
 - Assets/Prefabs/Common/Weapons/0001 Fireball.prefab
-- Assets/Prefabs/Common/Enemies/0001 Slime.prefab
+- Assets/Prefabs/Common/Enemies/0001 Slime Walking.prefab
+- Assets/Prefabs/Common/XP/XP.prefab
+- Assets/Prefabs/Common/Enemies/0000 Skeleton Dying.prefab
+- Assets/Prefabs/Common/Players/0000 Mage.prefab
+- Assets/Prefabs/Common/Enemies/0001 Slime Dying.prefab
+- Assets/Prefabs/Common/Players/0002 Mustang.prefab
+- Assets/Prefabs/Common/Cars/0001 Pickup.prefab
 - Assets/Prefabs/Common/Weapons/0000 Magic Missile.prefab
 - Assets/Prefabs/Common/Particles/0000 Magic Missile Trail.prefab
+- Assets/Prefabs/Common/Enemies/0002 Zombie Walking.prefab
+- Assets/Prefabs/Common/Skid Mark.prefab
 Dependencies: []

@@ -1,7 +1,6 @@
+using System;
 using UnityEngine;
 using CommonTools;
-using System.Collections.Generic;
-using TMPro;
 
 namespace Survivor
 {
@@ -101,6 +100,69 @@ namespace Survivor
         {
             GameDataIO.Load(m_gameData);
             SetMenuState(MENU_STATE.IN_GAME);
+        }
+
+        public float sqrMagnitude = 0.0f;
+        public void RunTest()
+        {
+            int numFrames = 600;
+
+            Logic.StartGame(m_gameData, m_balance);
+            float dt = 1.0f / 60.0f;
+
+            bool isGameOver;
+            Span<int> spawnedEnemyIdxs = stackalloc int[m_balance.MaxEnemies];
+            int spawnedEnemyCount;
+            Span<int> deadEnemyIdxs = stackalloc int[m_balance.MaxEnemies];
+            int deadEnemyCount;
+            Span<int> dyingEnemyIdxs = stackalloc int[m_balance.MaxEnemies];
+            int dyingEnemyCount;
+            Span<int> firedAmmoIdxs = stackalloc int[m_balance.MaxAmmo];
+            int firedAmmoCount;
+            Span<int> deadAmmoIdxs = stackalloc int[m_balance.MaxAmmo];
+            int deadAmmoCount;
+            Span<int> xpPlacedIdxs = stackalloc int[m_balance.MaxXP];
+            int xpPlacedCount;
+
+            int xpPickedUpMax = 10;
+            Span<int> xpPickedUpIdxs = stackalloc int[xpPickedUpMax];
+            int xpPickedUpCount;
+
+            m_gameData.PlayerTargetDirection = new Vector2(0.0f, 1.0f);
+
+            double time = Time.realtimeSinceStartupAsDouble;
+            double mapTime = 0.0f;
+            for (int i = 0; i < numFrames; i++)
+            {
+                Logic.Tick(
+                    m_metaData,
+                    m_gameData,
+                    m_balance,
+                    dt,
+                    spawnedEnemyIdxs,
+                    out spawnedEnemyCount,
+                    deadEnemyIdxs,
+                    out deadEnemyCount,
+                    dyingEnemyIdxs,
+                    out dyingEnemyCount,
+                    firedAmmoIdxs,
+                    out firedAmmoCount,
+                    deadAmmoIdxs,
+                    out deadAmmoCount,
+                    xpPlacedIdxs,
+                    out xpPlacedCount,
+                    xpPickedUpIdxs,
+                    out xpPickedUpCount,
+                    xpPickedUpMax,
+                    out isGameOver);
+
+                double t = Time.realtimeSinceStartupAsDouble;
+                Logic.AddAllEnemiesToMap(m_gameData, m_balance);
+                mapTime += Time.realtimeSinceStartupAsDouble - t;
+            }
+
+            Debug.Log(numFrames.ToString() + " frames test time " + (Time.realtimeSinceStartupAsDouble - time).ToString());
+            Debug.Log(numFrames.ToString() + " map time " + mapTime.ToString());
         }
 
         // Update is called once per frame

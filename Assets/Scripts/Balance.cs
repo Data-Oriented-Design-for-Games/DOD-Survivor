@@ -83,7 +83,10 @@ namespace Survivor
     public class Balance
     {
         public int MaxEnemies;
+        public int MaxEnemiesPerMapSquare;
         public float SpawnRadius;
+        public float BoundsRadius;
+        public float BoundsRadiusSqr;
 
         public int MaxPlayerWeapons;
 
@@ -117,7 +120,10 @@ namespace Survivor
                 int version = br.ReadInt32();
 
                 MaxEnemies = br.ReadInt32();
+                MaxEnemiesPerMapSquare = br.ReadInt32();
                 SpawnRadius = br.ReadSingle();
+                BoundsRadius = br.ReadSingle();
+                BoundsRadiusSqr = BoundsRadius * BoundsRadius;
 
                 MaxPlayerWeapons = br.ReadInt32();
 

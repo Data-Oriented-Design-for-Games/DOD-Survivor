@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6569723629107566049}
   - component: {fileID: 6499914139954733295}
   m_Layer: 0
-  m_Name: Square
+  m_Name: Enemy Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -73,15 +73,15 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1104216516, guid: 3e1468910125442ab9b26a66062ed477, type: 3}
+  m_Sprite: {fileID: -436327599, guid: d93c977df0a3942979599593aef137f1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2, y: 2}
+  m_Size: {x: 4.1875, y: 3.875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &7772979827908344955
@@ -93,9 +93,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5455207726926211683}
-  - component: {fileID: 2847892865747687350}
+  - component: {fileID: 1322849681566933596}
   m_Layer: 0
-  m_Name: 0002 Zombie Dying
+  m_Name: 0004 Giant Rat Walking
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -117,7 +117,7 @@ Transform:
   - {fileID: 6569723629107566049}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2847892865747687350
+--- !u!114 &1322849681566933596
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -131,12 +131,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 6499914139954733295}
   Sprites:
-  - {fileID: -1683620675, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: 388246683, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: -97844213, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: 296851609, guid: 8f9e58bcb2ccc4d9e8b4345f2b35d25f, type: 3}
-  - {fileID: -1573851299, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: 1328860825, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: 491634532, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
-  - {fileID: -1747903921, guid: 340dda277a1314bffbeb81c8dca0f8f0, type: 3}
+  - {fileID: -332867099, guid: 9d52867b1f31449ba886e948a6589f68, type: 3}
+  - {fileID: 806651839, guid: 9d52867b1f31449ba886e948a6589f68, type: 3}
+  - {fileID: -810691276, guid: 9d52867b1f31449ba886e948a6589f68, type: 3}
+  - {fileID: 704269, guid: 9d52867b1f31449ba886e948a6589f68, type: 3}
   FrameTime: 0.1

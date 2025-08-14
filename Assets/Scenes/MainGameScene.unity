@@ -862,6 +862,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Board: {fileID: 574646400}
   MainCamera: {fileID: 519420031}
+  sqrMagnitude: 0
 --- !u!4 &1695226660
 Transform:
   m_ObjectHideFlags: 0

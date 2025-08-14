@@ -1,8 +1,6 @@
 using System;
 using CommonTools;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace Survivor
@@ -45,7 +43,7 @@ namespace Survivor
         ParticlePool m_explosionPool = new ParticlePool();
         DyingEnemyPool m_dyingEnemyPool = new DyingEnemyPool();
         XPPool m_xpPool = new XPPool();
-        TireTrackPool m_tireTrackPool = new TireTrackPool();
+        TireTrackPool[] m_tireTrackPool = new TireTrackPool[2];
 
         Camera m_mainCamera;
         Vector2 m_mouseDownPos;
@@ -78,7 +76,12 @@ namespace Survivor
             // particles
             m_explosionPool.Init(gameData, balance, SpriteParent);
             m_trailPool.Init(gameData, balance, SpriteParent);
-            m_tireTrackPool.Init(gameData, balance.MaxSkidMarks * 4, SpriteParent, balance.SkidMarkName);
+            for (int i = 0; i < 2; i++)
+            {
+                int tireIdx = i + 2;
+                m_tireTrackPool[i] = new TireTrackPool();
+                m_tireTrackPool[i].Init(gameData, balance.MaxSkidMarks, SpriteParent, balance.SkidMarkName, tireIdx * balance.MaxSkidMarks);
+            }
 
             // dead enemies
             m_dyingEnemyPool.Init(gameData, balance, SpriteParent);
@@ -236,10 +239,11 @@ namespace Survivor
 
                 // skid marks
                 float skidMarkAngle = gameData.SkidMarkAngle[gameData.LastSkidMarkIndex];
-                for (int tireIdx = 0; tireIdx < 4; tireIdx++)
+                for (int i = 0; i < 2; i++)
                 {
+                    int tireIdx = i + 2;
                     int index = tireIdx * balance.MaxSkidMarks + gameData.LastSkidMarkIndex;
-                    m_tireTrackPool.ShowSkidMark(gameData.SkidMarkPos[index], gameData.SkidMarkColor[index], skidMarkAngle, index);
+                    m_tireTrackPool[i].ShowSkidMark(gameData.SkidMarkPos[index], gameData.SkidMarkColor[index], skidMarkAngle, gameData.LastSkidMarkIndex);
                 }
             }
             else
@@ -322,7 +326,8 @@ namespace Survivor
             m_trailPool.Tick(dt);
             m_dyingEnemyPool.Tick(dt);
             m_xpPool.Tick(dt);
-            m_tireTrackPool.Tick();
+            for (int i = 0; i < 2; i++)
+                m_tireTrackPool[i].Tick();
 
             m_boardGUI.GameTimeText.text = CommonVisual.GetTimeElapsedString(gameData.GameTime);
 

@@ -7,7 +7,9 @@ namespace Survivor
     {
         [Header("Enemies")]
         public int MaxEnemies;
+        public int MaxEnemiesPerMapSquare;
         public float SpawnRadius;
+        public float BoundsRadius;
 
         [Header("Player")]
         public int MaxPlayerWeapons;

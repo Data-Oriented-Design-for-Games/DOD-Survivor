@@ -76,6 +76,8 @@ namespace Survivor
 
                 // float enemyAngle = Vector2.SignedAngle(Vector2.up, -gameData.EnemyPosition[enemyIndex].normalized);
                 m_poolData.Pool[poolIndex].transform.localRotation = Quaternion.Euler(0.0f, 0.0f, gameData.EnemyRotation[enemyIndex]);
+                float scaleX = gameData.EnemyPosition[enemyIndex].x < 0.0f ? 1.0f : -1.0f;
+                m_poolData.Pool[poolIndex].transform.localScale = new Vector3(scaleX, 1.0f, 1.0f); 
             }
         }
     }
