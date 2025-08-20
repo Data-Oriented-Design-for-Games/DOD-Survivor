@@ -131,7 +131,6 @@ namespace Survivor
             m_gameData.PlayerTargetDirection = new Vector2(0.0f, 1.0f);
 
             double time = Time.realtimeSinceStartupAsDouble;
-            double mapTime = 0.0f;
             for (int i = 0; i < numFrames; i++)
             {
                 Logic.Tick(
@@ -155,14 +154,9 @@ namespace Survivor
                     out xpPickedUpCount,
                     xpPickedUpMax,
                     out isGameOver);
-
-                double t = Time.realtimeSinceStartupAsDouble;
-                Logic.AddAllEnemiesToMap(m_gameData, m_balance);
-                mapTime += Time.realtimeSinceStartupAsDouble - t;
             }
 
             Debug.Log(numFrames.ToString() + " frames test time " + (Time.realtimeSinceStartupAsDouble - time).ToString());
-            Debug.Log(numFrames.ToString() + " map time " + mapTime.ToString());
         }
 
         // Update is called once per frame

@@ -157,18 +157,12 @@ namespace Survivor
         {
             int mapEnemyIndex = mapIndex * balance.MaxEnemiesPerMapSquare + gameData.EnemyMapCount[mapIndex];
 
-            // for (int i = mapIndex * balance.MaxEnemies; i < mapIndex * balance.MaxEnemies + gameData.EnemyMapCount[mapIndex]; i++)
-            {
-                // check for duplicates
-            }
-
             gameData.EnemyMapIdxs[mapEnemyIndex] = enemyIndex;
             gameData.EnemyMapCount[mapIndex]++;
         }
 
-        public static void AddAllEnemiesToMap(GameData gameData, Balance balance)
+        static void addAllEnemiesToMap(GameData gameData, Balance balance)
         {
-            // int count = 0;
             ClearMap(gameData);
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
@@ -176,28 +170,7 @@ namespace Survivor
                 Vector2 enemyPos = gameData.EnemyPosition[enemyIndex];
                 int mapIndex = getMapIndex(balance, enemyPos);
                 addEnemyToMap(gameData, balance, mapIndex, enemyIndex);
-                /*
-                                // check bounds
-                                float enemyRadius = balance.EnemyBalance.Radius[gameData.EnemyType[enemyIndex]];
-                                for (int x = -1; x < 2; x++)
-                                {
-                                    for (int y = -1; y < 2; y++)
-                                    {
-                                        if (x != 0 && y != 0)
-                                        {
-                                            Vector2 pos = new Vector2(enemyPos.x + x * enemyRadius, enemyPos.y + y * enemyRadius);
-                                            int newMapIndex = getMapIndex(balance, pos);
-                                            if (newMapIndex != mapIndex)
-                                            {
-                                                count++;
-                                                // addEnemyToMap(gameData, balance, newMapIndex, enemyIndex);
-                                            }
-                                        }
-                                    }
-                                }
-                                */
             }
-            // Debug.Log("Enemies on edge " + count);
         }
 
         public static void ClearMap(GameData gameData)
@@ -250,7 +223,7 @@ namespace Survivor
                                     gameData.AmmoDirection[ammoIndex] = gameData.PlayerDirection.sqrMagnitude > 0.0f ? gameData.PlayerDirection : Vector2.up;
                                     gameData.AmmoRotationT[ammoIndex] = 0.0f;
 
-                                    int enemyIdx = GetClosestEnemyToPlayerIdxNotUsed(gameData);
+                                    int enemyIdx = GetClosestUntargetedEnemyIdxToPlayer(gameData);
                                     gameData.AmmoTargetIdx[ammoIndex] = enemyIdx;
                                     if (enemyIdx > -1)
                                         gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIdx] + balance.SpawnRadius * gameData.AmmoDirection[ammoIndex];
@@ -272,7 +245,36 @@ namespace Survivor
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref fireWeaponCount);
         }
 
-        public static int GetClosestEnemyToPlayerIdxNotUsed(GameData gameData)
+        public static int GetClosestUntargetedEnemyIdxInMap(GameData gameData, Balance balance, Vector2 position)
+        {
+            // check my tile for enemies
+            int mapIndex = getMapIndex(balance, position);
+            int closestEnemyIdx = -1;
+            float closestDistanceSqr = float.MaxValue;
+            for (int i = 0; i < gameData.EnemyMapCount[mapIndex]; i++)
+            {
+                int enemyIndex = gameData.EnemyMapIdxs[mapIndex * balance.MaxEnemiesPerMapSquare + i];
+
+                float distanceSqr = gameData.EnemyPosition[enemyIndex].sqrMagnitude;
+                if (distanceSqr < closestDistanceSqr)
+                {
+                    bool enemyTargeted = false;
+                    for (int ammoIndex = 0; ammoIndex < gameData.AliveAmmoCount; ammoIndex++)
+                        if (gameData.AmmoTargetIdx[ammoIndex] == enemyIndex)
+                            enemyTargeted = true;
+
+                    if (!enemyTargeted)
+                    {
+                        closestEnemyIdx = enemyIndex;
+                        closestDistanceSqr = distanceSqr;
+                    }
+                }
+            }
+
+            return closestEnemyIdx;
+        }
+
+        public static int GetClosestUntargetedEnemyIdxToPlayer(GameData gameData)
         {
             // change to insertion sort, and return closest untargeted value
             int closestEnemyIdx = -1;
@@ -358,6 +360,8 @@ namespace Survivor
             // Weapon
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
+            addAllEnemiesToMap(gameData, balance);
+
             moveAmmo(gameData, balance, dt);
 
             checkAmmoOutOfBounds(gameData, balance, deadAmmoIdxs, ref deadAmmoCount);
@@ -374,6 +378,8 @@ namespace Survivor
             moveEnemies(gameData, balance, dt);
 
             moveDyingEnemies(gameData, balance, dt);
+
+            addAllEnemiesToMap(gameData, balance);
 
             checkEnemyOutOfBounds(gameData, balance, deadEnemyIdxs, ref deadEnemyCount);
 
@@ -713,7 +719,6 @@ namespace Survivor
         {
             int mapSize = Mathf.FloorToInt(balance.BoundsRadius * 2);
 
-            AddAllEnemiesToMap(gameData, balance);
             for (int mapIndex = 0; mapIndex < gameData.EnemyMapCount.Length; mapIndex++)
             {
                 for (int i = 0; i < gameData.EnemyMapCount[mapIndex]; i++)
@@ -935,8 +940,6 @@ namespace Survivor
             {
                 Vector2 currentTirePos = balance.CarBalance[gameData.CarType].Tires[gameData.CarSlideIndex][tireIdx];
                 currentTirePos.x *= gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
-                // currentTirePos.x += UnityEngine.Random.value * 0.05f - 0.025f;
-                // currentTirePos.y += UnityEngine.Random.value * 0.05f - 0.025f;
 
                 int index = gameData.CurrentSkidMarkIndex + tireIdx * balance.MaxSkidMarks;
                 gameData.SkidMarkPos[index] = currentTirePos;
@@ -1010,8 +1013,16 @@ namespace Survivor
             for (int i = 0; i < gameData.AliveAmmoCount; i++)
             {
                 int ammoIndex = gameData.AliveAmmoIdx[i];
+                int weaponType = gameData.AmmoType[ammoIndex];
 
                 int enemyIndex = gameData.AmmoTargetIdx[ammoIndex];
+                if (enemyIndex == -1 && balance.WeaponBalance.AmmoTarget[weaponType] == AMMO_TARGET.ENEMY)
+                {
+                    // try to find new target
+                    enemyIndex = GetClosestUntargetedEnemyIdxInMap(gameData, balance, gameData.AmmoPosition[ammoIndex]);
+                    gameData.AmmoTargetIdx[ammoIndex] = enemyIndex;
+                }
+
                 if (enemyIndex > -1)
                     gameData.AmmoTargetPos[ammoIndex] = gameData.EnemyPosition[enemyIndex];
 
@@ -1112,11 +1123,11 @@ namespace Survivor
                 int ammoIndex = gameData.AliveAmmoIdx[i];
                 if (gameData.AmmoTargetIdx[ammoIndex] == enemyIdx)
                 {
-                    gameData.AmmoTargetIdx[ammoIndex] = GetClosestEnemyToPlayerIdxNotUsed(gameData);
+                    // gameData.AmmoTargetIdx[ammoIndex] = GetClosestUntargetedEnemyIdxToPlayer(gameData);
 
 
-                    // gameData.AmmoTargetIdx[ammoIndex] = -1;
-                    // gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
+                    gameData.AmmoTargetIdx[ammoIndex] = -1;
+                    gameData.AmmoTargetPos[ammoIndex] = gameData.AmmoPosition[ammoIndex] + gameData.AmmoDirection[ammoIndex] * balance.SpawnRadius;
                     //Debug.Log("ammo set new target position. gameData.AmmoDirection[" + ammoIndex + "] " + gameData.AmmoDirection[ammoIndex] + " gameData.AmmoTargetPos[" + ammoIndex + "] " + gameData.AmmoTargetPos[ammoIndex]);
                 }
             }
