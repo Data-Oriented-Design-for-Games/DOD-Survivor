@@ -69,6 +69,11 @@ namespace Survivor
             return go;
         }
 
+        public HealthBar GetHealthBar(Transform spriteParent)
+        {
+            return Instantiate(loadGameObject(m_commonBundle, "HealthBar", "Assets/Prefabs/Common/HealthBar.prefab"), spriteParent).GetComponent<HealthBar>();
+        }
+
         public Player GetPlayer(string playerName, Transform spriteParent)
         {
             return Instantiate(loadGameObject(m_commonBundle, playerName, "Assets/Prefabs/Common/Players/" + playerName + ".prefab"), spriteParent).GetComponent<Player>();

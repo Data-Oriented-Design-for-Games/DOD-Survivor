@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 440829259
+CRC: 3559417012
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 11fe17c7d7b970602519d4eb1b7af7c4
+    Hash: 35a033f7dc9025447961e4e60f7e0aea
   TypeTreeHash:
     serializedVersion: 2
-    Hash: a06510a0fcc60499163712de8dc3bf49
+    Hash: 3d0aa6c1214c60565a630ddb2c5897d8
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 11fe17c7d7b970602519d4eb1b7af7c4
+    Hash: 35a033f7dc9025447961e4e60f7e0aea
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -25,9 +25,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 29e84c7619565465e8c3ce6144da978b, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 79a6cde457eba454ba34826a6434d37b, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 1bc34b8fbd3cc4b2fbbe2b149fcb4ab9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 79a6cde457eba454ba34826a6434d37b, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 7cfa74e594eac400799de3341dd0416b, type: 3}
 - Class: 115
@@ -38,6 +38,7 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
+- Assets/Prefabs/Common/Enemies/0004 Giant Rat Dying.prefab
 - Assets/Prefabs/Common/Particles/0001 Fireball Trail.prefab
 - Assets/Prefabs/Common/Enemies/0002 Zombie Dying.prefab
 - Assets/Prefabs/Common/Enemies/0000 Skeleton Walking.prefab
@@ -45,13 +46,17 @@ Assets:
 - Assets/Prefabs/Common/Particles/0002 Car Tire Mark.prefab
 - Assets/Prefabs/Common/Weapons/0001 Fireball.prefab
 - Assets/Prefabs/Common/Enemies/0001 Slime Walking.prefab
+- Assets/Prefabs/Common/Enemies/0003 Bat Walking.prefab
 - Assets/Prefabs/Common/XP/XP.prefab
+- Assets/Prefabs/Common/Enemies/0004 Giant Rat Walking.prefab
 - Assets/Prefabs/Common/Enemies/0000 Skeleton Dying.prefab
 - Assets/Prefabs/Common/Players/0000 Mage.prefab
 - Assets/Prefabs/Common/Enemies/0001 Slime Dying.prefab
 - Assets/Prefabs/Common/Players/0002 Mustang.prefab
-- Assets/Prefabs/Common/Cars/0001 Pickup.prefab
+- Assets/Prefabs/Common/Cars/0000 Pickup.prefab
 - Assets/Prefabs/Common/Weapons/0000 Magic Missile.prefab
+- Assets/Prefabs/Common/Cars/0001 Bus.prefab
+- Assets/Prefabs/Common/Enemies/0003 Bat Dying.prefab
 - Assets/Prefabs/Common/Particles/0000 Magic Missile Trail.prefab
 - Assets/Prefabs/Common/Enemies/0002 Zombie Walking.prefab
 - Assets/Prefabs/Common/Skid Mark.prefab

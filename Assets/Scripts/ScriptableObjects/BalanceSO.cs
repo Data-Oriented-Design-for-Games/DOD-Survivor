@@ -5,14 +5,18 @@ namespace Survivor
     [CreateAssetMenu(fileName = "BalanceSO", menuName = "DOD/BalanceSO", order = 1)]
     public class BalanceSO : ScriptableObject
     {
+        public float MaxEnemiesPerMapSquare;
+        public int MapSize;
+        public int MaxXPPerMapSquare;
+
         [Header("Enemies")]
         public int MaxEnemies;
-        public int MaxEnemiesPerMapSquare;
         public float SpawnRadius;
         public float BoundsRadius;
 
         [Header("Player")]
         public int MaxPlayerWeapons;
+        public float StartingPickupRange;
 
         [Header("Car")]
         public int MaxSkidMarks;

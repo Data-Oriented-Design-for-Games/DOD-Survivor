@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Survivor
@@ -8,6 +9,7 @@ namespace Survivor
 
         public Vector2[] EnemyPosition;
         public float[] EnemyRotation;
+        public float[] EnemyVelocity;
 
         public Vector2[] EnemyPushStartPos;
         public Vector2[] EnemyPushEndPos;
@@ -27,11 +29,12 @@ namespace Survivor
 
         public Vector2 PlayerDirection;
         public Vector2 PlayerDelta;
-        public Vector2 PlayerTargetDirection;
+        public float PlayerVelocity;
 
         // car
         public int CarSlideIndex;
         public Vector2 CarSlideDirection;
+        public Vector2 CarTargetDirection;
         public float CarRotationAngle;
         public bool InCar;
         public float CarVelocity;
@@ -60,13 +63,27 @@ namespace Survivor
         public float[] PlayerWeaponFiringRateTimer;
 
         // experience
+        public float XP;
+        public float XPPickupRange;
         public Vector2[] XPPosition;
         public float[] XPValue;
+        public int XPCount;
         public int[] XPUsedIdxs;
         public int XPUsedCount;
         public int[] XPUnusedIdxs;
         public int XPUnusedCount;
-        public int XPCount;
+        // xp pickup
+        public int[] XPPickupIdxs;
+        public float[] XPPickupTimer;
+        public int XPPickupCount;
+        // xp map
+        public int[] XPMapIdxs;
+        public int[] XPMapCount;
+        public int[] XPMapOutOfBoundsIdxs;
+        public int XPMapOutOfBoundsCount;
+
+        // map
+        public int[] MapSpiralIndices;
 
         // enemy waves
         public int Level;
@@ -79,9 +96,11 @@ namespace Survivor
         public int CarType;
 
         public float GameTime;
-        public float XP;
 
         // stats
         public int StatsEnemiesKilled;
+
+        // performance stast
+        public int NumEnemyCollisionsChecks;
     }
 }

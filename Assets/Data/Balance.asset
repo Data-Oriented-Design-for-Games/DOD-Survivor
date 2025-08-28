@@ -12,11 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccacb6c2ec8074dbdbc596fa034238c3, type: 3}
   m_Name: Balance
   m_EditorClassIdentifier: 
-  MaxEnemies: 2000
   MaxEnemiesPerMapSquare: 200
+  MapSize: 15
+  MaxXPPerMapSquare: 40
+  MaxEnemies: 2000
   SpawnRadius: 7
   BoundsRadius: 8
   MaxPlayerWeapons: 12
+  StartingPickupRange: 1
   MaxSkidMarks: 1000
   SkidMark: {fileID: 77581038364359059, guid: ca0aefe03d6324826a2a2504e3ffb29f, type: 3}
   SkidMarkColor: {r: 0.08235294, g: 0.11372549, b: 0.15686275, a: 0.0627451}

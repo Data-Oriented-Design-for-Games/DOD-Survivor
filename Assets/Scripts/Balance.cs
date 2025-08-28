@@ -20,13 +20,14 @@ namespace Survivor
 
     public class EnemyBalance
     {
-        public int[] EnemyType;
+        public int[] EnemyID;
         public string[] SpriteName;
         public string[] DyingName;
         public float[] DyingTime;
         public Color[] DyingColor;
         public int[] SpriteType;
         public float[] Velocity;
+        public float[] Acceleration;
         public float[] Radius;
         public float[] HP;
         public float[] XP;
@@ -63,10 +64,10 @@ namespace Survivor
         public float AngleDelta;
         public Vector2[][] CollisionCircles;
         public float[][] CollisionRadius;
-        public Vector2[][] Tires;        
+        public Vector2[][] Tires;
     }
 
-    public struct HeroBalanceData
+    public struct HeroBalance
     {
         public string heroName;
         public int HP;
@@ -74,21 +75,19 @@ namespace Survivor
         public int WeaponID;
     }
 
-    public class HeroBalance
-    {
-        public HeroBalanceData[] HeroBalanceData;
-    }
-
     [Serializable]
     public class Balance
     {
         public int MaxEnemies;
         public int MaxEnemiesPerMapSquare;
+        public int MaxXPPerMapSquare;
         public float SpawnRadius;
         public float BoundsRadius;
         public float BoundsRadiusSqr;
+        public int MapSize;
 
         public int MaxPlayerWeapons;
+        public float StartingPickupRange;
 
         public int MaxSkidMarks;
         public string SkidMarkName;
@@ -101,7 +100,7 @@ namespace Survivor
         public string XPName;
 
         public LevelBalance[] LevelBalance;
-        public HeroBalance HeroBalance = new HeroBalance();
+        public HeroBalance[] HeroBalance;
         public CarBalance[] CarBalance;
         public WeaponBalance WeaponBalance = new WeaponBalance();
         public EnemyBalance EnemyBalance = new EnemyBalance();
@@ -119,13 +118,18 @@ namespace Survivor
             {
                 int version = br.ReadInt32();
 
+                MapSize = br.ReadInt32();
+
                 MaxEnemies = br.ReadInt32();
                 MaxEnemiesPerMapSquare = br.ReadInt32();
+                MaxXPPerMapSquare = br.ReadInt32();
+
                 SpawnRadius = br.ReadSingle();
                 BoundsRadius = br.ReadSingle();
                 BoundsRadiusSqr = BoundsRadius * BoundsRadius;
 
                 MaxPlayerWeapons = br.ReadInt32();
+                StartingPickupRange = br.ReadSingle();
 
                 MaxSkidMarks = br.ReadInt32();
                 SkidMarkName = br.ReadString();
@@ -162,14 +166,14 @@ namespace Survivor
                 }
 
                 int numPlayers = br.ReadInt32();
-                HeroBalance.HeroBalanceData = new HeroBalanceData[numPlayers];
+                HeroBalance = new HeroBalance[numPlayers];
                 for (int playerIdx = 0; playerIdx < numPlayers; playerIdx++)
                 {
-                    HeroBalance.HeroBalanceData[playerIdx].heroName = br.ReadString();
+                    HeroBalance[playerIdx].heroName = br.ReadString();
 
-                    HeroBalance.HeroBalanceData[playerIdx].HP = br.ReadInt32();
-                    HeroBalance.HeroBalanceData[playerIdx].Velocity = br.ReadSingle();
-                    HeroBalance.HeroBalanceData[playerIdx].WeaponID = br.ReadInt32();
+                    HeroBalance[playerIdx].HP = br.ReadInt32();
+                    HeroBalance[playerIdx].Velocity = br.ReadSingle();
+                    HeroBalance[playerIdx].WeaponID = br.ReadInt32();
                 }
 
                 int numCars = br.ReadInt32();
@@ -237,26 +241,28 @@ namespace Survivor
                 }
 
                 int numEnemies = br.ReadInt32();
-                EnemyBalance.EnemyType = new int[numEnemies];
+                EnemyBalance.EnemyID = new int[numEnemies];
                 EnemyBalance.SpriteName = new string[numEnemies];
                 EnemyBalance.SpriteType = new int[numEnemies];
                 EnemyBalance.DyingName = new string[numEnemies];
                 EnemyBalance.DyingTime = new float[numEnemies];
                 EnemyBalance.DyingColor = new Color[numEnemies];
                 EnemyBalance.Velocity = new float[numEnemies];
+                EnemyBalance.Acceleration = new float[numEnemies];
                 EnemyBalance.Radius = new float[numEnemies];
                 EnemyBalance.HP = new float[numEnemies];
                 EnemyBalance.XP = new float[numEnemies];
                 EnemyBalance.ImpactSlowdown = new float[numEnemies];
                 for (int enemyIdx = 0; enemyIdx < numEnemies; enemyIdx++)
                 {
-                    EnemyBalance.EnemyType[enemyIdx] = br.ReadInt32();
+                    EnemyBalance.EnemyID[enemyIdx] = br.ReadInt32();
                     EnemyBalance.SpriteName[enemyIdx] = br.ReadString();
                     EnemyBalance.SpriteType[enemyIdx] = br.ReadInt32();
                     EnemyBalance.DyingName[enemyIdx] = br.ReadString();
                     EnemyBalance.DyingTime[enemyIdx] = br.ReadSingle();
                     EnemyBalance.DyingColor[enemyIdx] = new Color(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                     EnemyBalance.Velocity[enemyIdx] = br.ReadSingle();
+                    EnemyBalance.Acceleration[enemyIdx] = br.ReadSingle();
                     EnemyBalance.Radius[enemyIdx] = br.ReadSingle();
                     EnemyBalance.HP[enemyIdx] = br.ReadSingle();
                     EnemyBalance.XP[enemyIdx] = br.ReadSingle();

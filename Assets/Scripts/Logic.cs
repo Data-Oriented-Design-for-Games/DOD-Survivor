@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using Unity.Burst.Intrinsics;
 
 namespace Survivor
 {
@@ -10,6 +9,7 @@ namespace Survivor
         {
             gameData.EnemyPosition = new Vector2[balance.MaxEnemies];
             gameData.EnemyRotation = new float[balance.MaxEnemies];
+            gameData.EnemyVelocity = new float[balance.MaxEnemies];
 
             gameData.EnemyPushStartPos = new Vector2[balance.MaxEnemies];
             gameData.EnemyPushEndPos = new Vector2[balance.MaxEnemies];
@@ -22,8 +22,8 @@ namespace Survivor
             gameData.DyingEnemyIdxs = new int[balance.MaxEnemies];
             gameData.DyingEnemyTimer = new float[balance.MaxEnemies];
 
-            gameData.EnemyMapIdxs = new int[balance.MaxEnemiesPerMapSquare * Mathf.FloorToInt(balance.BoundsRadius * 2) * Mathf.FloorToInt(balance.BoundsRadius * 2)];
-            gameData.EnemyMapCount = new int[Mathf.FloorToInt(balance.BoundsRadius * 2) * Mathf.FloorToInt(balance.BoundsRadius * 2)];
+            gameData.EnemyMapIdxs = new int[balance.MaxEnemiesPerMapSquare * balance.MapSize * balance.MapSize];
+            gameData.EnemyMapCount = new int[balance.MapSize * balance.MapSize];
 
             gameData.AmmoPosition = new Vector2[balance.MaxAmmo];
             gameData.AmmoDirection = new Vector2[balance.MaxAmmo];
@@ -41,11 +41,21 @@ namespace Survivor
             gameData.XPValue = new float[balance.MaxXP];
             gameData.XPUsedIdxs = new int[balance.MaxXP];
             gameData.XPUnusedIdxs = new int[balance.MaxXP];
+            gameData.XPMapIdxs = new int[balance.MaxXPPerMapSquare * balance.MapSize * balance.MapSize];
+            gameData.XPMapCount = new int[balance.MapSize * balance.MapSize];
+            gameData.XPMapOutOfBoundsIdxs = new int[balance.MaxXP];
+
+            gameData.XPPickupTimer = new float[balance.MaxXP];
+            gameData.XPPickupIdxs = new int[balance.MaxXP];
 
             gameData.SkidMarkPos = new Vector2[4 * balance.MaxSkidMarks];
             gameData.SkidMarkAngle = new float[balance.MaxSkidMarks];
             gameData.SkidMarkColor = new Color[4 * balance.MaxSkidMarks];
             gameData.CurrentSkidMarkColor = new Color[4];
+
+            gameData.MapSpiralIndices = new int[balance.MapSize * balance.MapSize];
+            generateSpiralIndices(gameData.MapSpiralIndices, balance.MapSize);
+
         }
 
         public static void Init(MetaData metaData)
@@ -55,6 +65,9 @@ namespace Survivor
 
         public static void StartGame(GameData gameData, Balance balance)
         {
+
+            UnityEngine.Random.InitState(0);
+
             gameData.InGame = false;
 
             gameData.GameTime = 0.0f;
@@ -64,9 +77,13 @@ namespace Survivor
             gameData.CarType = 0;
 
             gameData.InCar = true;
+
             gameData.PlayerDirection = gameData.InCar ? Vector2.right : Vector2.zero;
-            gameData.PlayerTargetDirection = gameData.InCar ? Vector2.right : Vector2.zero;
-            gameData.CarSlideDirection = gameData.PlayerDirection;
+
+            gameData.PlayerVelocity = balance.HeroBalance[gameData.HeroType].Velocity;
+
+            gameData.CarTargetDirection = Vector2.right;
+            gameData.CarSlideDirection = Vector2.right;
             gameData.CarRotationAngle = 0.0f;
             gameData.CarVelocity = 0.0f;
 
@@ -105,6 +122,12 @@ namespace Survivor
             for (int i = 0; i < balance.MaxXP; i++)
                 gameData.XPUnusedIdxs[i] = (balance.MaxXP - 1) - i;
 
+            for (int i = 0; i < balance.MaxXP; i++)
+                gameData.XPPickupTimer[i] = 0.0f;
+            gameData.XPPickupCount = 0;
+
+            gameData.XPPickupRange = balance.StartingPickupRange;
+
             gameData.StatsEnemiesKilled = 0;
 
             gameData.CurrentSkidMarkIndex = 0;
@@ -132,15 +155,15 @@ namespace Survivor
             gameData.EnemyType[enemyIndex] = enemyType;
             gameData.EnemyRotation[enemyIndex] = 0.0f;
             gameData.EnemyPushValue[enemyIndex] = 0.0f;
+            gameData.EnemyVelocity[enemyIndex] = balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]];
 
             return enemyIndex;
         }
 
-        static int getMapIndex(Balance balance, Vector2 position)
+        static int getMapIndexClamped(int mapSize, Vector2 position)
         {
-            int mapSize = Mathf.FloorToInt(balance.BoundsRadius * 2);
-            int x = Mathf.FloorToInt(position.x + balance.BoundsRadius);
-            int y = Mathf.FloorToInt(position.y + balance.BoundsRadius);
+            int x = Mathf.FloorToInt(position.x + mapSize / 2);
+            int y = Mathf.FloorToInt(position.y + mapSize / 2);
             if (x < 0)
                 x = 0;
             if (y < 0)
@@ -153,9 +176,31 @@ namespace Survivor
             return mapIndex;
         }
 
+        static int getMapIndexInBounds(int mapSize, Vector2 position)
+        {
+            int x = Mathf.FloorToInt(position.x + mapSize / 2);
+            int y = Mathf.FloorToInt(position.y + mapSize / 2);
+            if (x < 0 || y < 0 || x > mapSize - 1 || y > mapSize - 1)
+                return -1;
+
+            int mapIndex = y * mapSize + x;
+            return mapIndex;
+        }
+
         static void addEnemyToMap(GameData gameData, Balance balance, int mapIndex, int enemyIndex)
         {
             int mapEnemyIndex = mapIndex * balance.MaxEnemiesPerMapSquare + gameData.EnemyMapCount[mapIndex];
+            gameData.EnemyMapIdxs[mapEnemyIndex] = enemyIndex;
+            gameData.EnemyMapCount[mapIndex]++;
+        }
+
+        static void addEnemyToMapUnique(GameData gameData, Balance balance, int mapIndex, int enemyIndex)
+        {
+            int offset = mapIndex * balance.MaxEnemiesPerMapSquare;
+            int mapEnemyIndex = offset + gameData.EnemyMapCount[mapIndex];
+            for (int i = offset; i < offset + gameData.EnemyMapCount[mapIndex]; i++)
+                if (gameData.EnemyMapIdxs[i] == enemyIndex)
+                    return;
 
             gameData.EnemyMapIdxs[mapEnemyIndex] = enemyIndex;
             gameData.EnemyMapCount[mapIndex]++;
@@ -163,17 +208,47 @@ namespace Survivor
 
         static void addAllEnemiesToMap(GameData gameData, Balance balance)
         {
-            ClearMap(gameData);
+            ClearEnemyMap(gameData, balance);
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIndex = gameData.AliveEnemyIdxs[i];
                 Vector2 enemyPos = gameData.EnemyPosition[enemyIndex];
-                int mapIndex = getMapIndex(balance, enemyPos);
+                int mapIndex = getMapIndexClamped(balance.MapSize, enemyPos);
                 addEnemyToMap(gameData, balance, mapIndex, enemyIndex);
             }
         }
 
-        public static void ClearMap(GameData gameData)
+        static void addAllEnemiesToMapUnique(GameData gameData, Balance balance)
+        {
+            ClearEnemyMap(gameData, balance);
+            for (int i = 0; i < gameData.AliveEnemyCount; i++)
+            {
+                int enemyIndex = gameData.AliveEnemyIdxs[i];
+                Vector2 enemyPos = gameData.EnemyPosition[enemyIndex];
+                int mapIndex = getMapIndexClamped(balance.MapSize, enemyPos);
+                addEnemyToMapUnique(gameData, balance, mapIndex, enemyIndex);
+
+                // try to add sides
+                int enemyType = gameData.EnemyType[enemyIndex];
+                for (int x = -1; x < 2; x++)
+                {
+                    float xDiff = x * balance.EnemyBalance.Radius[enemyType];
+                    for (int y = -1; y < 2; y++)
+                    {
+                        float yDiff = y * balance.EnemyBalance.Radius[enemyType];
+                        if (x != 0 && y != 0)
+                        {
+                            Vector2 pos = new Vector2(enemyPos.x + xDiff, enemyPos.y + yDiff);
+                            int mapIndex2 = getMapIndexClamped(balance.MapSize, pos);
+                            if (mapIndex != mapIndex2)
+                                addEnemyToMapUnique(gameData, balance, mapIndex2, enemyIndex);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void ClearEnemyMap(GameData gameData, Balance balance)
         {
             for (int i = 0; i < gameData.EnemyMapCount.Length; i++)
                 gameData.EnemyMapCount[i] = 0;
@@ -248,7 +323,7 @@ namespace Survivor
         public static int GetClosestUntargetedEnemyIdxInMap(GameData gameData, Balance balance, Vector2 position)
         {
             // check my tile for enemies
-            int mapIndex = getMapIndex(balance, position);
+            int mapIndex = getMapIndexClamped(balance.MapSize, position);
             int closestEnemyIdx = -1;
             float closestDistanceSqr = float.MaxValue;
             for (int i = 0; i < gameData.EnemyMapCount[mapIndex]; i++)
@@ -360,7 +435,7 @@ namespace Survivor
             // Weapon
             tryFireWeapon(gameData, balance, dt, firedWeaponIdxs, ref firedWeaponCount);
 
-            addAllEnemiesToMap(gameData, balance);
+            // addAllEnemiesToMap(gameData, balance);
 
             moveAmmo(gameData, balance, dt);
 
@@ -371,6 +446,7 @@ namespace Survivor
             checkAmmoReachedDestination(gameData, balance, dyingEnemyIdxs, ref dyingEnemyCount, deadAmmoIdxs, ref deadAmmoCount);
 
             // enemies
+            addAllXPToMap(gameData, balance);
             timeOutDyingEnemies(gameData, balance, deadEnemyIdxs, ref deadEnemyCount, xpPlacedIdxs, ref xpPlacedCount, dt);
 
             trySpawnEnemy(gameData, balance, dt, spawnedEnemyIdxs, ref spawnedEnemyCount);
@@ -379,14 +455,36 @@ namespace Survivor
 
             moveDyingEnemies(gameData, balance, dt);
 
-            addAllEnemiesToMap(gameData, balance);
-
             checkEnemyOutOfBounds(gameData, balance, deadEnemyIdxs, ref deadEnemyCount);
 
             checkDyingEnemyOutOfBounds(gameData, balance);
 
-            // doEnemyToEnemyCollision(gameData, balance);
-            doEnemyToEnemyCollisionMap(gameData, balance);
+            int type = 0;
+            switch (type)
+            {
+                case 0:
+                    {
+                        // 0.09
+                        addAllEnemiesToMapUnique(gameData, balance);
+                        doEnemyToEnemyCollisionMap(gameData, balance);
+                    }
+                    break;
+
+                case 1:
+                    {
+                        // 0.189
+                        addAllEnemiesToMap(gameData, balance);
+                        doEnemyToEnemyCollisionMap2(gameData, balance);
+                    }
+                    break;
+
+                case 2:
+                    {
+                        // 0.78
+                        doEnemyToEnemyCollision(gameData, balance);
+                    }
+                    break;
+            }
 
 
             // player
@@ -398,7 +496,9 @@ namespace Survivor
             }
             else
                 movePlayer(gameData, balance, dt);
+
             pickupXP(gameData, xpPickedUpIdxs, ref xpPickedUpCount, xpPickedUpMax);
+            animateXPPickup(gameData, dt, xpPickedUpIdxs, ref xpPickedUpCount, xpPickedUpMax);
 
 
             gameOver = false;//checkGameOver(metaData, gameData, balance);
@@ -410,12 +510,17 @@ namespace Survivor
             for (int i = 0; i < gameData.XPUsedCount; i++)
             {
                 int xpIndex = gameData.XPUsedIdxs[i];
-                if (xpPickedUpCount < xpPickedUpMax && gameData.XPPosition[xpIndex].sqrMagnitude < 0.1f)
+                if (xpPickedUpCount < xpPickedUpMax && gameData.XPPosition[xpIndex].sqrMagnitude < 1.0f)
                 {
-                    gameData.XP += gameData.XPValue[xpIndex];
                     // pickup XP;
-                    xpPickedUpIdxs[xpPickedUpCount++] = xpIndex;
-                    gameData.XPUnusedIdxs[gameData.XPUnusedCount++] = xpIndex;
+                    // xpPickedUpIdxs[xpPickedUpCount++] = xpIndex;
+                    // gameData.XPUnusedIdxs[gameData.XPUnusedCount++] = xpIndex;
+
+                    gameData.XPPickupIdxs[gameData.XPPickupCount] = xpIndex;
+                    gameData.XPPickupTimer[gameData.XPPickupCount] = 1.0f;
+                    gameData.XPPickupCount++;
+
+                    Debug.Log("Picked up gameData.XPPosition[" + xpIndex + "] " + gameData.XPPosition[xpIndex]);
                 }
                 else
                 {
@@ -423,6 +528,56 @@ namespace Survivor
                 }
             }
             gameData.XPUsedCount = count;
+        }
+
+        private static void animateXPPickup(GameData gameData, float dt, Span<int> xpPickedUpIdxs, ref int xpPickedUpCount, int xpPickedUpMax)
+        {
+            int count = 0;
+            for (int i = 0; i < gameData.XPPickupCount; i++)
+            {
+                int xpIndex = gameData.XPPickupIdxs[i];
+                gameData.XPPickupTimer[i] -= dt * 0.1f;
+                if (gameData.XPPickupTimer[i] > 0.0f)
+                {
+                    gameData.XPPickupIdxs[count] = xpIndex;
+                    gameData.XPPickupTimer[count] = gameData.XPPickupTimer[i];
+
+                    float value = (gameData.XPPickupTimer[i] * gameData.XPPickupTimer[i] * gameData.XPPickupTimer[i]);
+                    gameData.XPPosition[xpIndex] *= value;
+                    Debug.Log("gameData.XPPosition["+xpIndex+"] " + gameData.XPPosition[xpIndex] + " value " + value);
+
+                    count++;
+                }
+                else
+                {
+                    gameData.XP += gameData.XPValue[xpIndex];
+
+                    xpPickedUpIdxs[xpPickedUpCount++] = xpIndex;
+                    gameData.XPUnusedIdxs[gameData.XPUnusedCount++] = xpIndex;
+
+                    if (xpPickedUpCount >= xpPickedUpMax)
+                        break;
+                }
+            }
+            gameData.XPPickupCount = count;
+        }
+
+        public static void TestSpanMaxEnemies(GameData gameData, Balance balance, Span<int> spawnedEnemyIdxs, ref int spawnedEnemyCount)
+        {
+            int count = 0;
+            for (int waveIdx = 0; waveIdx < balance.LevelBalance[gameData.Level].TotalWaves; waveIdx++)
+            {
+                int enemyType = balance.LevelBalance[gameData.Level].EnemyType[waveIdx];
+                for (int i = 0; i < balance.LevelBalance[gameData.Level].NumEnemies[waveIdx]; i++)
+                {
+                    int enemyIndex = spawnEnemy(gameData, balance, enemyType);
+                    spawnedEnemyIdxs[spawnedEnemyCount++] = enemyIndex;
+                    gameData.WaveEnemyCount[waveIdx]++;
+                    count++;
+                    if (count == balance.MaxEnemies)
+                        return;
+                }
+            }
         }
 
         static void trySpawnEnemy(GameData gameData, Balance balance, float dt, Span<int> spawnedEnemyIdxs, ref int spawnedEnemyCount)
@@ -521,21 +676,99 @@ namespace Survivor
             // Debug.Log("enemyDying " + enemyIndex);
         }
 
+        public static void ClearXPMap(GameData gameData)
+        {
+            for (int i = 0; i < gameData.XPMapCount.Length; i++)
+                gameData.XPMapCount[i] = 0;
+            gameData.XPMapOutOfBoundsCount = 0;
+        }
+
+        static void addAllXPToMap(GameData gameData, Balance balance)
+        {
+            ClearXPMap(gameData);
+            for (int i = 0; i < gameData.XPUsedCount; i++)
+            {
+                int xpIndex = gameData.XPUsedIdxs[i];
+                int mapIndex = getMapIndexInBounds(balance.MapSize, gameData.XPPosition[xpIndex]);
+                if (mapIndex > -1)
+                {
+                    int xpMapIndex = mapIndex * balance.MaxXPPerMapSquare + gameData.XPMapCount[mapIndex];
+                    gameData.XPMapIdxs[xpMapIndex] = xpIndex;
+                    gameData.XPMapCount[mapIndex]++;
+
+                    if (gameData.XPMapCount[mapIndex] >= balance.MaxXPPerMapSquare)
+                        Debug.LogError("gameData.XPMapCount[" + mapIndex + "] " + gameData.XPMapCount[mapIndex] + " >= than balance.MaxXPPerMapSquare " + balance.MaxXPPerMapSquare);
+                }
+                else
+                    gameData.XPMapOutOfBoundsIdxs[gameData.XPMapOutOfBoundsCount++] = xpIndex;
+
+            }
+        }
+
+        static void addXPToMap(GameData gameData, Balance balance, int mapIndex, int xpIndex)
+        {
+            int mapXPIndex = mapIndex * balance.MaxXPPerMapSquare + gameData.XPMapCount[mapIndex];
+            gameData.XPMapIdxs[mapXPIndex] = xpIndex;
+            gameData.XPMapCount[mapIndex]++;
+        }
+
         private static int dropXP(GameData gameData, Balance balance, int enemyIndex, Span<int> xpPlacedIdxs, ref int xpPlacedCount)
         {
             if (gameData.XPUnusedCount > 0)
             {
-                int xpIndex = gameData.XPUnusedIdxs[--gameData.XPUnusedCount];
-                gameData.XPUsedIdxs[gameData.XPUsedCount++] = xpIndex;
-                gameData.XPPosition[xpIndex] = gameData.EnemyPosition[enemyIndex];
-                gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
-                xpPlacedIdxs[xpPlacedCount++] = xpIndex;
+                int xpIndex = -1;
+                int mapIndex = getMapIndexClamped(balance.MapSize, gameData.EnemyPosition[enemyIndex]);
+
+                for (int i = 0; i < gameData.XPMapCount[mapIndex]; i++)
+                {
+                    int index = mapIndex * balance.MaxXPPerMapSquare + i;
+                    int xpIdx = gameData.XPMapIdxs[index];
+                    float distanceSqr = (gameData.XPPosition[xpIdx] - gameData.EnemyPosition[enemyIndex]).sqrMagnitude;
+                    if (distanceSqr < 0.1f)
+                    {
+                        gameData.XPValue[xpIdx] += balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                        return 0;
+                    }
+                }
+                if (xpIndex == -1)
+                {
+                    if (gameData.XPMapCount[mapIndex] >= balance.MaxXPPerMapSquare)
+                    {
+                        gameData.XPValue[mapIndex * balance.MaxXPPerMapSquare] += balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                        return 0;
+                    }
+                    else
+                    {
+                        xpIndex = gameData.XPUnusedIdxs[--gameData.XPUnusedCount];
+                        addXPToMap(gameData, balance, mapIndex, xpIndex);
+
+                        gameData.XPUsedIdxs[gameData.XPUsedCount++] = xpIndex;
+                        gameData.XPPosition[xpIndex] = gameData.EnemyPosition[enemyIndex];
+                        gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                        xpPlacedIdxs[xpPlacedCount++] = xpIndex;
+
+                        if (gameData.XPMapCount[mapIndex] >= balance.MaxXPPerMapSquare)
+                            Debug.LogError("gameData.XPMapCount[" + mapIndex + "] out of space! " + gameData.XPMapCount[mapIndex] + " vs balance.MaxXPPerMapSquare " + balance.MaxXPPerMapSquare);
+                    }
+                }
+
             }
             else
             {
-                int xpIndex = combineClosestXPReturnNewUnusedIndex(gameData);
-                gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
+                int largestXPMapIndex = 0;
+                int largestXPCount = gameData.XPMapCount[0];
+                for (int i = 1; i < gameData.XPMapCount.Length; i++)
+                {
+                    if (gameData.XPMapCount[i] > largestXPCount)
+                    {
+                        largestXPCount = gameData.XPMapCount[i];
+                        largestXPMapIndex = i;
+                    }
+                }
+
+                int xpIndex = gameData.XPMapOutOfBoundsIdxs[--gameData.XPMapOutOfBoundsCount];
                 gameData.XPPosition[xpIndex] = gameData.EnemyPosition[enemyIndex];
+                gameData.XPValue[xpIndex] = balance.EnemyBalance.XP[gameData.EnemyType[enemyIndex]];
             }
 
             return xpPlacedCount;
@@ -630,7 +863,7 @@ namespace Survivor
                 {
                     markEnemyDead(gameData, balance, enemyIndex, deadEnemyIdxs, ref deadEnemyCount);
 
-                    //dropXP(gameData, balance, enemyIndex, xpPlacedIdxs, ref xpPlacedCount);
+                    dropXP(gameData, balance, enemyIndex, xpPlacedIdxs, ref xpPlacedCount);
                 }
                 else
                 {
@@ -652,8 +885,12 @@ namespace Survivor
                     moveAndPushEnemy(gameData, dt, enemyIndex);
                 else
                 {
+                    gameData.EnemyVelocity[enemyIndex] += balance.EnemyBalance.Acceleration[gameData.EnemyType[enemyIndex]] * dt;
+                    if (gameData.EnemyVelocity[enemyIndex] > balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]])
+                        gameData.EnemyVelocity[enemyIndex] = balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]];
+
                     Vector2 dir = -gameData.EnemyPosition[enemyIndex].normalized;
-                    gameData.EnemyPosition[enemyIndex] += dir * balance.EnemyBalance.Velocity[gameData.EnemyType[enemyIndex]] * dt;
+                    gameData.EnemyPosition[enemyIndex] += dir * gameData.EnemyVelocity[enemyIndex] * dt;
                     if (gameData.EnemyRotation[enemyIndex] > 0.0f)
                     {
                         gameData.EnemyRotation[enemyIndex] -= dt * 360.0f;
@@ -693,6 +930,7 @@ namespace Survivor
 
         static void doEnemyToEnemyCollision(GameData gameData, Balance balance)
         {
+            gameData.NumEnemyCollisionsChecks = 0;
             for (int i = 0; i < gameData.AliveEnemyCount; i++)
             {
                 int enemyIdx1 = gameData.AliveEnemyIdxs[i];
@@ -710,14 +948,50 @@ namespace Survivor
                         Vector2 midPoint = (gameData.EnemyPosition[enemyIdx1] + gameData.EnemyPosition[enemyIdx2]) / 2.0f;
                         gameData.EnemyPosition[enemyIdx1] = midPoint + diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]];
                         gameData.EnemyPosition[enemyIdx2] = midPoint - diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
+
                     }
+                    gameData.NumEnemyCollisionsChecks++;
                 }
             }
         }
 
         static void doEnemyToEnemyCollisionMap(GameData gameData, Balance balance)
         {
-            int mapSize = Mathf.FloorToInt(balance.BoundsRadius * 2);
+            gameData.NumEnemyCollisionsChecks = 0;
+
+            for (int mapIndex = 0; mapIndex < gameData.EnemyMapCount.Length; mapIndex++)
+            {
+                for (int i = 0; i < gameData.EnemyMapCount[mapIndex]; i++)
+                {
+                    int enemyIdx1 = gameData.EnemyMapIdxs[mapIndex * balance.MaxEnemiesPerMapSquare + i];
+
+                    for (int j = i + 1; j < gameData.EnemyMapCount[mapIndex]; j++)
+                    {
+                        int enemyIdx2 = gameData.EnemyMapIdxs[mapIndex * balance.MaxEnemiesPerMapSquare + j];
+
+                        float diameter = balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]] + balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
+                        float diameterSqr = diameter * diameter;
+
+                        Vector2 diff = gameData.EnemyPosition[enemyIdx1] - gameData.EnemyPosition[enemyIdx2];
+                        if (diff.sqrMagnitude <= diameterSqr)
+                        {
+                            Vector2 diffNormalized = diff.normalized;
+                            Vector2 midPoint = (gameData.EnemyPosition[enemyIdx1] + gameData.EnemyPosition[enemyIdx2]) / 2.0f;
+                            gameData.EnemyPosition[enemyIdx1] = midPoint + diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]];
+                            gameData.EnemyPosition[enemyIdx2] = midPoint - diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
+                        }
+
+                        gameData.NumEnemyCollisionsChecks++;
+                    }
+                }
+            }
+        }
+
+        static void doEnemyToEnemyCollisionMap2(GameData gameData, Balance balance)
+        {
+            gameData.NumEnemyCollisionsChecks = 0;
+
+            int mapSize = balance.MapSize;
 
             for (int mapIndex = 0; mapIndex < gameData.EnemyMapCount.Length; mapIndex++)
             {
@@ -736,7 +1010,7 @@ namespace Survivor
                             (y + diffY >= 0 && y + diffY < mapSize))
                             {
                                 int mapIndex2 = (y + diffY) * mapSize + (x + diffX);
-                                for (int j = i + 1; j < gameData.EnemyMapCount[mapIndex2]; j++)
+                                for (int j = 0; j < gameData.EnemyMapCount[mapIndex2]; j++)
                                 {
                                     int enemyIdx2 = gameData.EnemyMapIdxs[mapIndex2 * balance.MaxEnemiesPerMapSquare + j];
 
@@ -751,6 +1025,8 @@ namespace Survivor
                                         gameData.EnemyPosition[enemyIdx1] = midPoint + diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx1]];
                                         gameData.EnemyPosition[enemyIdx2] = midPoint - diffNormalized * balance.EnemyBalance.Radius[gameData.EnemyType[enemyIdx2]];
                                     }
+
+                                    gameData.NumEnemyCollisionsChecks++;
                                 }
                             }
                         }
@@ -878,12 +1154,12 @@ namespace Survivor
             gameData.EnemyPushEndPos[enemyIdx] = pushEndPos;
             gameData.EnemyPushValue[enemyIdx] = 1.0f;
             gameData.EnemyPushRotation[enemyIdx] = UnityEngine.Random.value * 720.0f - 360.0f;
+            gameData.EnemyVelocity[enemyIdx] = 0.0f;
         }
 
         static void movePlayer(GameData gameData, Balance balance, float dt)
         {
-            gameData.PlayerDirection = gameData.PlayerTargetDirection;
-            gameData.PlayerDelta = gameData.PlayerDirection * balance.HeroBalance.HeroBalanceData[gameData.HeroType].Velocity * dt;
+            gameData.PlayerDelta = gameData.PlayerDirection * gameData.PlayerVelocity * dt;
 
             moveObjectsAroundPlayer(gameData, dt);
         }
@@ -892,7 +1168,7 @@ namespace Survivor
         {
             // gameData.PlayerDirection = RotateVector(gameData.PlayerDirection, gameData.CarRotationAngle * dt);
 
-            float angle = Vector2.Angle(gameData.PlayerDirection, gameData.PlayerTargetDirection);
+            float angle = Vector2.Angle(gameData.PlayerDirection, gameData.CarTargetDirection);
             Vector2 lerpVector = gameData.PlayerDirection;
             float velocityMultiplier = 1.0f;
             if (angle > 0.0f)
@@ -903,7 +1179,7 @@ namespace Survivor
                 if (t > 1.0f)
                     t = 1.0f;
 
-                lerpVector = Vector2.Lerp(gameData.PlayerDirection, gameData.PlayerTargetDirection, t);
+                lerpVector = Vector2.Lerp(gameData.PlayerDirection, gameData.CarTargetDirection, t);
                 // velocityMultiplier = lerpVector.magnitude;
                 // Debug.Log("moveCar()");
                 // Debug.Log("gameData.PlayerDirection " + gameData.PlayerDirection + " gameData.PlayerTargetDirection " + gameData.PlayerTargetDirection + " t " + t);
@@ -912,7 +1188,7 @@ namespace Survivor
             }
 
             gameData.PlayerDirection = lerpVector.normalized;
-            gameData.CarSlideDirection = (gameData.PlayerDirection + gameData.PlayerTargetDirection) / 2.0f;
+            gameData.CarSlideDirection = (gameData.PlayerDirection + gameData.CarTargetDirection) / 2.0f;
 
             if ((gameData.CarSlideDirection - gameData.PlayerDirection).sqrMagnitude > 0.1f)
                 for (int tireIdx = 0; tireIdx < 4; tireIdx++)
@@ -1171,22 +1447,22 @@ namespace Survivor
             gameData.AliveAmmoCount = ammoCount;
         }
 
-        public static void MouseMovePlayer(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
+        public static void MouseMovePlayer(GameData gameData, Balance balance, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
         {
             Vector2 newDirection = (mouseCurrentPos - mouseDownPos).normalized;
-            gameData.PlayerDirection = gameData.PlayerTargetDirection = newDirection;
+            gameData.PlayerDirection = newDirection;
+            gameData.PlayerVelocity = balance.HeroBalance[gameData.HeroType].Velocity;
+        }
+
+        public static void MouseUpPlayer(GameData gameData)
+        {
+            gameData.PlayerVelocity = 0.0f;
         }
 
         public static void MouseMoveCar(GameData gameData, Vector2 mouseDownPos, Vector2 mouseCurrentPos)
         {
             Vector2 newDirection = (mouseCurrentPos - mouseDownPos).normalized;
-            gameData.PlayerTargetDirection = newDirection;
-        }
-
-
-        public static void MouseUpPlayer(GameData gameData)
-        {
-            gameData.PlayerDirection = gameData.PlayerTargetDirection = Vector2.zero;
+            gameData.CarTargetDirection = newDirection;
         }
 
         public static void MouseUpCar(GameData gameData)
@@ -1198,6 +1474,50 @@ namespace Survivor
         public static void SetMenuState(MetaData metaData, MENU_STATE newMenuState)
         {
             metaData.MenuState = newMenuState;
+        }
+
+        public static void generateSpiralIndices(int[] mapSpiralIndices, int mapSize)
+        {
+            Debug.Log("generateSpiralIndices(" + mapSize + ")");
+            int arrayLength = mapSize * mapSize;
+
+            // (di, dj) is a vector - direction in which we move right now
+            int dx = 1;
+            int dy = 0;
+            // length of current segment
+            int segment_length = 1;
+
+            // current position (i, j) and how much of current segment we passed
+            int x = mapSize / 2;
+            int y = mapSize / 2;
+            int segment_passed = 0;
+
+            mapSpiralIndices[0] = y * mapSize + x;
+            for (int k = 1; k < arrayLength; ++k)
+            {
+                // make a step, add 'direction' vector (di, dj) to current position (i, j)
+                x += dx;
+                y += dy;
+                ++segment_passed;
+                mapSpiralIndices[k] = y * mapSize + x;
+
+                if (segment_passed == segment_length)
+                {
+                    // done with current segment
+                    segment_passed = 0;
+
+                    // 'rotate' directions
+                    int buffer = dx;
+                    dx = -dy;
+                    dy = buffer;
+
+                    // increase segment length if necessary
+                    if (dy == 0)
+                    {
+                        ++segment_length;
+                    }
+                }
+            }
         }
     }
 }

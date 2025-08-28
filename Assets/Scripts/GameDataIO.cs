@@ -33,8 +33,8 @@ namespace Survivor
 
                 bw.Write(gameData.PlayerDirection.x);
                 bw.Write(gameData.PlayerDirection.y);
-                bw.Write(gameData.PlayerTargetDirection.x);
-                bw.Write(gameData.PlayerTargetDirection.y);
+                bw.Write(gameData.CarTargetDirection.x);
+                bw.Write(gameData.CarTargetDirection.y);
                 bw.Write(gameData.InCar);
 
                 bw.Write(balance.MaxAmmo);
@@ -91,8 +91,8 @@ namespace Survivor
 
                     gameData.PlayerDirection.x = br.ReadSingle();
                     gameData.PlayerDirection.y = br.ReadSingle();
-                    gameData.PlayerTargetDirection.x = br.ReadSingle();
-                    gameData.PlayerTargetDirection.y = br.ReadSingle();
+                    gameData.CarTargetDirection.x = br.ReadSingle();
+                    gameData.CarTargetDirection.y = br.ReadSingle();
                     gameData.InCar = br.ReadBoolean();
 
                     int numWeapons = br.ReadInt32();

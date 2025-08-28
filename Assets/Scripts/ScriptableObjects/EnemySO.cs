@@ -10,6 +10,7 @@ namespace Survivor
         public AnimatedSprite DeathAnimation;
         public Color DyingColor;
         public float Velocity;
+        public float Acceleration;
         public float Radius;
         public float HP;
         public float XP;

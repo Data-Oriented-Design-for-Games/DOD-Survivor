@@ -36,6 +36,7 @@ namespace Survivor
 
         Player m_hero;
         Car m_car;
+        HealthBar m_playerHealthBar;
 
         EnemyPool m_enemyPool = new EnemyPool();
         WeaponPool m_ammoPool = new WeaponPool();
@@ -58,6 +59,8 @@ namespace Survivor
         Balance balance;
 
         PlayerAnimationData m_playerAnimationData;
+
+        public AnimationCurve XPPickupAnimCurve;
 
         public void Init(MetaData metaData, GameData gameData, Balance balance, Camera mainCamera)
         {
@@ -89,6 +92,10 @@ namespace Survivor
             // xp
             m_xpPool.Init(gameData, balance, SpriteParent);
 
+            m_playerHealthBar = AssetManager.Instance.GetHealthBar(SpriteParent);
+            m_playerHealthBar.transform.localPosition = new Vector3(0.0f, 0.2f, -11.0f);
+            m_playerHealthBar.gameObject.SetActive(false);
+
             // GUI
             m_boardGUI = new BoardGUI();
             m_boardGUI.UI = AssetManager.Instance.GetInGameUI();
@@ -111,7 +118,7 @@ namespace Survivor
         public void Show()
         {
             // player
-            m_hero = AssetManager.Instance.GetPlayer(balance.HeroBalance.HeroBalanceData[gameData.HeroType].heroName, SpriteParent);
+            m_hero = AssetManager.Instance.GetPlayer(balance.HeroBalance[gameData.HeroType].heroName, SpriteParent);
             m_hero.transform.localPosition = new Vector3(0.0f, 0.0f, -10.0f);
             m_playerAnimationData = new PlayerAnimationData();
             CommonVisual.InitPlayerFrameData(m_playerAnimationData, m_hero);
@@ -121,7 +128,20 @@ namespace Survivor
             m_car.transform.localPosition = new Vector3(0.0f, 0.0f, -10.0f);
             m_car.gameObject.SetActive(gameData.InCar);
 
-            m_boardGUI.UI.SetActive(true);
+            // m_boardGUI.UI.SetActive(true);
+
+            // TEST
+            Span<int> spawnedEnemyIdxs = stackalloc int[balance.MaxEnemies];
+            int spawnedEnemyCount = 0;
+            Logic.TestSpanMaxEnemies(gameData, balance, spawnedEnemyIdxs, ref spawnedEnemyCount);
+            for (int i = 0; i < spawnedEnemyCount; i++)
+            {
+                int enemyIndex = spawnedEnemyIdxs[i];
+                int spriteType = balance.EnemyBalance.SpriteType[gameData.EnemyType[enemyIndex]];
+                m_enemyPool.ShowEnemy(enemyIndex, spriteType, gameData.EnemyPosition[enemyIndex]);
+            }
+
+            m_playerHealthBar.gameObject.SetActive(true);
         }
 
         public void Hide()
@@ -165,7 +185,7 @@ namespace Survivor
             Span<int> xpPlacedIdxs = stackalloc int[balance.MaxXP];
             int xpPlacedCount;
 
-            int xpPickedUpMax = 10;
+            int xpPickedUpMax = balance.MaxXP;
             Span<int> xpPickedUpIdxs = stackalloc int[xpPickedUpMax];
             int xpPickedUpCount;
 
@@ -253,11 +273,16 @@ namespace Survivor
                     m_hero.UpdateFrame(m_playerAnimationData);
             }
 
-            float playerScaleX = gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
             if (gameData.InCar)
+            {
+                float playerScaleX = gameData.CarSlideDirection.x > 0.0f ? 1.0f : -1.0f;
                 m_car.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
+            }
             else
-                m_hero.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);
+            {
+            float playerScaleX = gameData.PlayerDirection.x > 0.0f ? 1.0f : -1.0f;
+                m_hero.transform.localScale = new Vector3(playerScaleX, 1.0f, 1.0f);                
+            }
 
             // enemies
             for (int i = 0; i < dyingEnemyCount; i++)
@@ -333,7 +358,9 @@ namespace Survivor
 
             string statsText = "Enemies alive " + gameData.AliveEnemyCount.ToString("N0") + "\n";
             statsText += "Enemies dying " + gameData.DyingEnemyCount.ToString("N0") + "\n";
-            statsText += "Enemies dead " + gameData.StatsEnemiesKilled.ToString("N0");
+            statsText += "Enemies dead " + gameData.StatsEnemiesKilled.ToString("N0") + "\n";
+            statsText += "Collisions " + gameData.NumEnemyCollisionsChecks.ToString("N0") + "\n";
+
             m_boardGUI.StatsText.text = statsText;
         }
 
@@ -357,9 +384,6 @@ namespace Survivor
 
             if (mouseDown)
             {
-                // if (gameData.InCar)
-                //     SteeringWheel.SetActive(true);
-                // else
                 InputCircleOut.SetActive(true);
                 m_mouseDownPos = mouseLocalPos;
             }
@@ -376,7 +400,7 @@ namespace Survivor
                 if (gameData.InCar)
                     Logic.MouseMoveCar(gameData, m_mouseDownPos, mouseLocalPos);
                 else
-                    Logic.MouseMovePlayer(gameData, m_mouseDownPos, mouseLocalPos);
+                    Logic.MouseMovePlayer(gameData, balance, m_mouseDownPos, mouseLocalPos);
 
                 InputCircleIn.transform.localPosition = (mouseLocalPos - m_mouseDownPos).normalized * magnitude * ((1.0f - InputCircleIn.transform.localScale.x) / 2.0f);
             }
@@ -391,19 +415,19 @@ namespace Survivor
                     Logic.MouseUpPlayer(gameData);
             }
 
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-                Span<int> firedWeaponIdxs = stackalloc int[balance.MaxAmmo];
-                int firedWeaponCount = 0;
+            // if (Input.GetKeyUp(KeyCode.Space))
+            // {
+            //     Span<int> firedWeaponIdxs = stackalloc int[balance.MaxAmmo];
+            //     int firedWeaponCount = 0;
 
-                Logic.TestFireWeapon(gameData, balance, (1.0f / 60.0f), firedWeaponIdxs, ref firedWeaponCount);
-                for (int i = 0; i < firedWeaponCount; i++)
-                {
-                    int ammoIndex = firedWeaponIdxs[i];
-                    int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
-                    m_ammoPool.ShowAmmo(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
-                }
-            }
+            //     Logic.TestFireWeapon(gameData, balance, (1.0f / 60.0f), firedWeaponIdxs, ref firedWeaponCount);
+            //     for (int i = 0; i < firedWeaponCount; i++)
+            //     {
+            //         int ammoIndex = firedWeaponIdxs[i];
+            //         int spriteType = balance.WeaponBalance.SpriteType[gameData.AmmoType[ammoIndex]];
+            //         m_ammoPool.ShowAmmo(ammoIndex, spriteType, gameData.AmmoPosition[ammoIndex]);
+            //     }
+            // }
         }
 
         void updateVisuals()

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using CommonTools;
+using System.Collections.Generic;
 
 namespace Survivor
 {
@@ -105,7 +106,7 @@ namespace Survivor
         public float sqrMagnitude = 0.0f;
         public void RunTest()
         {
-            int numFrames = 600;
+            int numFrames = 60 * 10;
 
             Logic.StartGame(m_gameData, m_balance);
             float dt = 1.0f / 60.0f;
@@ -128,7 +129,7 @@ namespace Survivor
             Span<int> xpPickedUpIdxs = stackalloc int[xpPickedUpMax];
             int xpPickedUpCount;
 
-            m_gameData.PlayerTargetDirection = new Vector2(0.0f, 1.0f);
+            m_gameData.CarTargetDirection = new Vector2(0.0f, 1.0f);
 
             double time = Time.realtimeSinceStartupAsDouble;
             for (int i = 0; i < numFrames; i++)

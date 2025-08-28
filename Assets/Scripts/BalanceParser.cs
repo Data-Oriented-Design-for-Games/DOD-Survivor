@@ -76,12 +76,16 @@ namespace Survivor
 
                     BalanceSO balanceSO = (BalanceSO)AssetDatabase.LoadAssetAtPath("Assets/Data/Balance.asset", typeof(BalanceSO));
 
+                    bw.Write(balanceSO.MapSize);
+
                     bw.Write(balanceSO.MaxEnemies);
-                    bw.Write(balanceSO.MaxEnemiesPerMapSquare);
+                    bw.Write(Mathf.FloorToInt(balanceSO.MaxEnemiesPerMapSquare));                    
+                    bw.Write(Mathf.FloorToInt(balanceSO.MaxXPPerMapSquare));                    
                     bw.Write(balanceSO.SpawnRadius);
                     bw.Write(balanceSO.BoundsRadius);
 
                     bw.Write(balanceSO.MaxPlayerWeapons);
+                    bw.Write(balanceSO.StartingPickupRange);
 
                     bw.Write(balanceSO.MaxSkidMarks);
                     bw.Write(balanceSO.SkidMark.name);
@@ -227,6 +231,7 @@ namespace Survivor
                         bw.Write(enemySO.DyingColor.b);
 
                         bw.Write(enemySO.Velocity);
+                        bw.Write(enemySO.Acceleration);
                         bw.Write(enemySO.Radius);
                         bw.Write(enemySO.HP);
                         bw.Write(enemySO.XP);
