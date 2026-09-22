@@ -47,6 +47,7 @@ namespace Survivor
         public Color[] SkidMarkColor;
         public Color[] CurrentSkidMarkColor;
 
+        // ammo
         public Vector2[] AmmoPosition;
         public Vector2[] AmmoDirection;
         public int[] AmmoType;

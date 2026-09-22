@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEditor.Build;
 using System.IO;
 using UnityEngine;
 using System;
@@ -20,7 +21,7 @@ namespace Survivor
         {
             setAndroidBuildNumber();
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "");
 
             DateTime theTime = DateTime.Now;
             string dateTime = theTime.ToString("yyyy-MM-dd HH.mm.ss");
@@ -40,12 +41,12 @@ namespace Survivor
 
             PlayerSettings.Android.useCustomKeystore = false;
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "RELEASE");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "RELEASE");
             DateTime theTime = DateTime.Now;
             string dateTime = theTime.ToString("yyyy-MM-dd HH.mm.ss");
             EditorUserBuildSettings.buildAppBundle = false;
             Build(BuildTarget.Android, Application.dataPath + "/../../Build/ReleaseTest " + dateTime + ".apk", BuildOptions.None);
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -65,17 +66,17 @@ namespace Survivor
 
             //PlayerSettings.Android.minifyRelease = true;
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "RELEASE");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "RELEASE");
             DateTime theTime = DateTime.Now;
             string dateTime = theTime.ToString("yyyy-MM-dd HH.mm.ss");
             EditorUserBuildSettings.buildAppBundle = true;
-            EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Public;
+            UnityEditor.Android.UserBuildSettings.DebugSymbols.level = Unity.Android.Types.DebugSymbolLevel.SymbolTable;
 
             Build(BuildTarget.Android, Application.dataPath + "/../../Build/Release " + dateTime + ".aab", BuildOptions.None);
 
-            EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Disabled;
+            UnityEditor.Android.UserBuildSettings.DebugSymbols.level = Unity.Android.Types.DebugSymbolLevel.None;
             EditorUserBuildSettings.buildAppBundle = false;
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "");
 
             PlayerSettings.Android.useCustomKeystore = false;
 
@@ -106,11 +107,11 @@ namespace Survivor
         {
             setiOSBuildNumber();
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.iOS, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.iOS, "");
 
             Build(BuildTarget.iOS, Application.dataPath + "/../../Build/iOSBuild", BuildOptions.AutoRunPlayer);
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.iOS, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.iOS, "");
         }
 
         [MenuItem("DOD/Build/iOS Release")]
@@ -118,11 +119,11 @@ namespace Survivor
         {
             setiOSBuildNumber();
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.iOS, "RELEASE");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.iOS, "RELEASE");
 
             Build(BuildTarget.iOS, Application.dataPath + "/../../Build/iOSBuild", BuildOptions.AutoRunPlayer);
 
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.iOS, "");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.iOS, "");
         }
 
         static void setiOSBuildNumber()

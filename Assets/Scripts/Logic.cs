@@ -33,8 +33,8 @@ namespace Survivor
             gameData.DeadAmmoIdx = new int[balance.MaxAmmo];
             gameData.AmmoTargetIdx = new int[balance.MaxAmmo];
             gameData.AmmoTargetPos = new Vector2[balance.MaxAmmo];
-            gameData.PlayerWeaponFiringRateTimer = new float[balance.MaxAmmo];
 
+            gameData.PlayerWeaponFiringRateTimer = new float[balance.MaxPlayerWeapons];
             gameData.PlayerWeaponType = new int[balance.MaxPlayerWeapons];
 
             gameData.XPPosition = new Vector2[balance.MaxXP];
