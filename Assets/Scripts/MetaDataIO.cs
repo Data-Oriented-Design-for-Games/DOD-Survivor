@@ -26,7 +26,7 @@ public static class MetaDataIO
             using (var stream = File.Open(fileName, FileMode.Open))
             using (BinaryReader br = new BinaryReader(stream))
             {
-                int verison = br.ReadInt32();
+                int version = br.ReadInt32();
                 metaData.BestTime = br.ReadSingle();
                 metaData.MenuState = (MENU_STATE)br.ReadByte();
             }
