@@ -86,3 +86,6 @@ crashlytics-build.properties
 
 *.slnx
 .claude/
+
+# Mono crash dumps
+mono_crash.*
